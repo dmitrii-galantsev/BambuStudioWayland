@@ -24,18 +24,11 @@ done
 cat <<EOF > @SLIC3R_APP_KEY@.desktop
 [Desktop Entry]
 Name=@SLIC3R_APP_KEY@
-GenericName=3D Printing Software
-Comment=A cutting-edge, feature-rich slicing software.
 Exec=AppRun %U
 Icon=@SLIC3R_APP_KEY@
-Terminal=false
 Type=Application
 Categories=Graphics;3DGraphics;Engineering;
 MimeType=model/stl;model/3mf;application/vnd.ms-3mfdocument;application/prs.wavefront-obj;application/x-amf;x-scheme-handler/bambustudio;x-scheme-handler/bambustudioopen;
-Keywords=3D;Printing;Slicer;slice;3D;printer;convert;gcode;stl;obj;amf;SLA
-StartupNotify=false
-StartupWMClass=@SLIC3R_APP_CMD@
-X-AppImage-Version=@SLIC3R_VERSION@
 EOF
 
 
