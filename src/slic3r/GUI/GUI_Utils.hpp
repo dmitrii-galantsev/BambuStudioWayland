@@ -528,6 +528,10 @@ private:
 bool load_image(const std::string& filename, wxImage &image);
 bool generate_image(const std::string &filename, wxImage &image, wxSize img_size, int method = GERNERATE_IMAGE_RESIZE);
 
+#ifdef __WXGTK3__
+void RemoveButtonBorder(wxWindow* win);
+#endif
+
 }}
 
 #endif
