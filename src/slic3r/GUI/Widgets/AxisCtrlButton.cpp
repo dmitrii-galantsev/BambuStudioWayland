@@ -56,7 +56,7 @@ AxisCtrlButton::AxisCtrlButton(wxWindow *parent, ScalableBitmap &icon, long stly
     inner_background_color.append(BUTTON_IN_BG_COL, StateColor::Normal);
     inner_background_color.append(BUTTON_IN_BG_COL, StateColor::Enabled);
 
-    state_handler.attach({ &border_color, &background_color });
+    state_handler.attach(std::vector<StateColor const*>{ &border_color, &background_color });
     state_handler.update_binds();
 }
 

@@ -12,6 +12,10 @@
     #include <wx/msw/registry.h>
 #endif // _WIN32
 
+#ifdef __WXGTK__
+#include <gtk/gtk.h>
+#endif
+
 #include <wx/toplevel.h>
 #include <wx/sizer.h>
 #include <wx/checkbox.h>
@@ -147,10 +151,6 @@ void on_window_geometry(wxTopLevelWindow *tlw, std::function<void()> callback)
 #endif
 }
 
-#if !wxVERSION_EQUAL_OR_GREATER_THAN(3,1,3)
-wxDEFINE_EVENT(EVT_DPI_CHANGED_SLICER, DpiChangedEvent);
-#endif // !wxVERSION_EQUAL_OR_GREATER_THAN
-
 #ifdef _WIN32
 template<class F> typename F::FN winapi_get_function(const wchar_t *dll, const char *fn_name) {
     static HINSTANCE dll_handle = LoadLibraryExW(dll, nullptr, 0);
@@ -246,12 +246,7 @@ bool check_dark_mode() {
         return value <= 0;
     }
 #endif
-#if wxCHECK_VERSION(3,1,3)
     return wxSystemSettings::GetAppearance().IsDark();
-#else
-    const unsigned luma = wxGetApp().get_colour_approx_luma(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
-    return luma < 128;
-#endif
 }
 
 
@@ -601,6 +596,35 @@ void WikiPanel::msw_rescale()
         m_wiki_icon_hover->msw_rescale();
     }
 }
+
+#ifdef __WXGTK3__
+// Strip the GTK theme button border/padding so a wxBitmapToggleButton (or
+// similar) renders flush against its bitmap. wxGTK 3.3 paints a theme frame
+// around button-derived widgets that would otherwise crowd the bitmap.
+void RemoveButtonBorder(wxWindow* win)
+{
+    GtkWidget* widget = win->GetHandle();
+    if (!widget) return;
+
+    GtkCssProvider* provider = gtk_css_provider_new();
+    const char* css =
+        "button, entry, spinbutton, spinbutton entry {"
+        "  border: none;"
+        "  outline: none;"
+        "  box-shadow: none;"
+        "  padding: 0px;"
+        "  margin: 0px;"
+        "  min-height: 0px;"
+        "  min-width: 0px;"
+        "  background: none;"
+        "}";
+    gtk_css_provider_load_from_data(provider, css, -1, nullptr);
+    GtkStyleContext* ctx = gtk_widget_get_style_context(widget);
+    gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER(provider),
+                                   GTK_STYLE_PROVIDER_PRIORITY_USER);
+    g_object_unref(provider);
+}
+#endif // __WXGTK3__
 
 }
 }

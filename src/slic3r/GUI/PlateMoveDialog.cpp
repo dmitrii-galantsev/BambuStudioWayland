@@ -94,7 +94,7 @@ PlateMoveDialog::PlateMoveDialog(wxWindow *parent, wxWindowID id, const wxString
     m_specify_plate_idx            = GUI::wxGetApp().plater()->get_partplate_list().get_curr_plate_index();
     for (size_t i = 0; i < plate_list.get_plate_count(); i++) {
         if (i < 9) {
-            m_plate_number_choices_str.Add("0" + std::to_wstring(i + 1));
+            m_plate_number_choices_str.Add(L"0" + std::to_wstring(i + 1));
         } else if (i == 9) {
             m_plate_number_choices_str.Add("10");
         } else {
@@ -110,17 +110,17 @@ PlateMoveDialog::PlateMoveDialog(wxWindow *parent, wxWindowID id, const wxString
             update_swipe_button_state();
         }
     });
-    combox_sizer->Add(m_swipe_frontmost_button, 0, wxALIGN_LEFT | wxEXPAND | wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    combox_sizer->Add(m_swipe_left_button, 0, wxALIGN_LEFT | wxEXPAND | wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    combox_sizer->Add(m_combobox_plate, 0, wxALIGN_LEFT | wxEXPAND | wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    combox_sizer->Add(m_swipe_right_button, 0, wxALIGN_LEFT | wxEXPAND | wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
-    combox_sizer->Add(m_swipe_backmost_button, 0, wxALIGN_LEFT | wxEXPAND | wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(5));
+    combox_sizer->Add(m_swipe_frontmost_button, 0, wxEXPAND | wxALL, FromDIP(5));
+    combox_sizer->Add(m_swipe_left_button, 0, wxEXPAND | wxALL, FromDIP(5));
+    combox_sizer->Add(m_combobox_plate, 0, wxEXPAND | wxALL, FromDIP(5));
+    combox_sizer->Add(m_swipe_right_button, 0, wxEXPAND | wxALL, FromDIP(5));
+    combox_sizer->Add(m_swipe_backmost_button, 0, wxEXPAND | wxALL, FromDIP(5));
 
     content_sizer->Add(text_sizer, 0, wxEXPAND | wxLEFT, FromDIP(0));
     content_sizer->Add(combox_sizer, 0, wxEXPAND | wxLEFT, FromDIP(0));
 
     layout_sizer->AddStretchSpacer();
-    layout_sizer->Add(content_sizer, 0, wxEXPAND | wxALIGN_CENTER | wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(0));
+    layout_sizer->Add(content_sizer, 0, wxEXPAND | wxLEFT, FromDIP(0));
     layout_sizer->AddStretchSpacer();
     m_sizer_main->Add(layout_sizer, 0, wxEXPAND);
     m_sizer_main->AddSpacer(FromDIP(10));

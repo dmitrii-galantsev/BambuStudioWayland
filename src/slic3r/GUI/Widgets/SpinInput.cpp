@@ -4,6 +4,9 @@
 #include "TextCtrl.h"
 
 #include <wx/dcgraph.h>
+#ifdef __WXGTK3__
+#include "../GUI_Utils.hpp"
+#endif
 
 wxDEFINE_EVENT(EVT_SPINCTRL_TEXT, wxCommandEvent);
 
@@ -58,9 +61,12 @@ void SpinInput::Create(wxWindow *parent,
     StaticBox::Create(parent, wxID_ANY, pos, size);
     SetFont(Label::Body_12);
     wxWindow::SetLabel(label);
-    state_handler.attach({&label_color, &text_color});
+    state_handler.attach(std::vector<StateColor const*>{&label_color, &text_color});
     state_handler.update_binds();
     text_ctrl = new TextCtrl(this, wxID_ANY, text, {20, 4}, wxDefaultSize, style | wxBORDER_NONE | wxTE_PROCESS_ENTER, wxTextValidator(wxFILTER_DIGITS));
+#ifdef __WXGTK3__
+    Slic3r::GUI::RemoveButtonBorder(text_ctrl);
+#endif
     text_ctrl->SetFont(Label::Body_14);
     text_ctrl->SetBackgroundColour(background_color.colorForStates(state_handler.states()));
     text_ctrl->SetForegroundColour(text_color.colorForStates(state_handler.states()));

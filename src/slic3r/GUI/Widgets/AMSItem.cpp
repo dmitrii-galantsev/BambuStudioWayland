@@ -3334,7 +3334,7 @@ void AmsItem::create(wxWindow *parent)
 
         sizer_item->Add(sizer_can, 0, wxALIGN_CENTER_HORIZONTAL, 0);
         //sizer_item->Add(m_panel_road, 0, wxALIGN_CENTER_HORIZONTAL, 0);
-        sizer_item->Add(m_panel_road, 0, wxEXPAND | wxALIGN_CENTER_HORIZONTAL);
+        sizer_item->Add(m_panel_road, 0, wxEXPAND);
 
         SetSizer(sizer_item);
     }

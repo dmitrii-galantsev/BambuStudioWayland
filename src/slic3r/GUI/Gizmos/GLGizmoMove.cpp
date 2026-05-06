@@ -8,7 +8,7 @@
 #include "libslic3r/AppConfig.hpp"
 
 
-#include <GL/glew.h>
+#include <glad/gl.h>
 
 #include <wx/utils.h>
 
