@@ -373,7 +373,7 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
     m_input_k_val->SetMinSize(wxSize(FromDIP(245), -1));
     m_input_k_val->SetMaxSize(wxSize(FromDIP(245), -1));
     m_input_k_val->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
-    kn_val_sizer->Add(m_input_k_val, 0, wxALL | wxEXPAND | wxALIGN_CENTER_VERTICAL, FromDIP(0));
+    kn_val_sizer->Add(m_input_k_val, 0, wxALL | wxEXPAND, FromDIP(0));
 
     // n params input
     wxBoxSizer* n_sizer = new wxBoxSizer(wxHORIZONTAL);
@@ -384,7 +384,7 @@ void AMSMaterialsSetting::create_panel_kn(wxWindow* parent)
     kn_val_sizer->Add(m_n_param, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
     m_input_n_val = new TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_CENTRE | wxTE_PROCESS_ENTER);
     m_input_n_val->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
-    kn_val_sizer->Add(m_input_n_val, 0, wxALL | wxEXPAND | wxALIGN_CENTER_VERTICAL, FromDIP(5));
+    kn_val_sizer->Add(m_input_n_val, 0, wxALL | wxEXPAND, FromDIP(5));
     m_n_param->Hide();
     m_input_n_val->Hide();
 
@@ -1165,7 +1165,7 @@ void AMSMaterialsSetting::Popup(wxString filament, wxString sn, wxString temp_mi
     // Request PA calibration history if not loaded yet — needed for k-profile dropdown
     if (obj->GetCalib()->IsVersionInited() && !obj->GetCalib()->IsPAHistoryReady()) {
         PACalibExtruderInfo cali_info;
-        int ext_id = obj->get_extruder_id_by_ams_id(std::to_string(ams_id));
+        int ext_id = obj->GetFilaSystem()->GetExtruderIdByAmsId(std::to_string(ams_id));
         cali_info.nozzle_diameter        = obj->GetExtderSystem()->GetNozzleDiameter(ext_id);
         cali_info.use_extruder_id        = false;
         cali_info.use_nozzle_volume_type = false;

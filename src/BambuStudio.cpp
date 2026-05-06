@@ -88,7 +88,10 @@ using namespace nlohmann;
 #include <GLFW/glfw3.h>
 
 #ifdef __WXGTK__
+#if __has_include(<X11/Xlib.h>)
 #include <X11/Xlib.h>
+#endif
+#include <unistd.h>
 #endif
 
 #ifdef SLIC3R_GUI
@@ -1464,16 +1467,53 @@ int CLI::run(int argc, char **argv)
     save_main_thread_id();
 
 #ifdef __WXGTK__
-    // On Linux, wxGTK has no support for Wayland, and the app crashes on
-    // startup if gtk3 is used. This env var has to be set explicitly to
-    // instruct the window manager to fall back to X server mode.
-    ::setenv("GDK_BACKEND", "x11", /* replace */ true);
+    // Safety fallback: if wxWidgets was not built with EGL support, native
+    // Wayland will crash in wxGLCanvas::IsDisplaySupported() because the GLX
+    // backend cannot access an X11 display. Force X11 mode in that case.
+#if !defined(wxHAS_EGL) || !wxHAS_EGL
+    {
+        const char* wayland_env = ::getenv("WAYLAND_DISPLAY");
+        if (wayland_env && *wayland_env) {
+            BOOST_LOG_TRIVIAL(warning) << "Wayland detected but wxWidgets has no EGL support (wxHAS_EGL is OFF). Forcing X11 backend.";
+            ::setenv("GDK_BACKEND", "x11", true);
+        }
+    }
+#endif
 
-    ::setenv("WEBKIT_DISABLE_COMPOSITING_MODE", "1", /* replace */ false);
+    // WebKit2GTK compositing can fail under XWayland. Only disable it when
+    // both DISPLAY and WAYLAND_DISPLAY are set (i.e., XWayland is in use).
+    {
+        const char* display_env_wk = ::getenv("DISPLAY");
+        const char* wayland_env_wk = ::getenv("WAYLAND_DISPLAY");
+        if (display_env_wk && *display_env_wk && wayland_env_wk && *wayland_env_wk) {
+            ::setenv("WEBKIT_DISABLE_COMPOSITING_MODE", "1", /* replace */ false);
+        }
+    }
 
-    // Also on Linux, we need to tell Xlib that we will be using threads,
-    // lest we crash when we fire up GStreamer.
-    XInitThreads();
+    // XInitThreads is needed before GStreamer may use Xlib. On native
+    // Wayland without DISPLAY, GStreamer uses waylandsink (no Xlib).
+    #if __has_include(<X11/Xlib.h>)
+    {
+        const char* display_env = ::getenv("DISPLAY");
+        if (display_env && *display_env) {
+            XInitThreads();
+            // Xlib's default error handler calls exit() on any protocol error,
+            // which kills the process for benign races. Replace with a logging
+            // handler that swallows the error.
+            XSetErrorHandler([](Display* dpy, XErrorEvent* ev) -> int {
+                char buf[256] = {0};
+                XGetErrorText(dpy, ev->error_code, buf, sizeof(buf));
+                BOOST_LOG_TRIVIAL(warning)
+                    << "X11 error: " << buf
+                    << " (request " << int(ev->request_code)
+                    << "." << int(ev->minor_code)
+                    << ", resource 0x" << std::hex << ev->resourceid << std::dec
+                    << ", serial " << ev->serial << ")";
+                return 0;
+            });
+        }
+    }
+    #endif
 #endif
 
 	// Switch boost::filesystem to utf8.
@@ -1577,19 +1617,17 @@ int CLI::run(int argc, char **argv)
         BOOST_LOG_TRIVIAL(info) << "no action, start gui directly" << std::endl;
         ::Label::initSysFont();
 #ifdef SLIC3R_GUI
-    /*#if !defined(_WIN32) && !defined(__APPLE__)
+    #if !defined(_WIN32) && !defined(__APPLE__)
         // likely some linux / unix system
         const char *display = boost::nowide::getenv("DISPLAY");
-        // const char *wayland_display = boost::nowide::getenv("WAYLAND_DISPLAY");
-        //if (! ((display && *display) || (wayland_display && *wayland_display))) {
-        if (! (display && *display)) {
-            // DISPLAY not set.
-            boost::nowide::cerr << "DISPLAY not set, GUI mode not available." << std::endl << std::endl;
+        const char *wayland_display = boost::nowide::getenv("WAYLAND_DISPLAY");
+        if (! ((display && *display) || (wayland_display && *wayland_display))) {
+            boost::nowide::cerr << "Neither DISPLAY nor WAYLAND_DISPLAY set, GUI mode not available." << std::endl << std::endl;
             this->print_help(false);
             // Indicate an error.
             return 1;
         }
-    #endif // some linux / unix system*/
+    #endif // some linux / unix system
         Slic3r::GUI::GUI_InitParams params;
         params.argc = argc;
         params.argv = argv;

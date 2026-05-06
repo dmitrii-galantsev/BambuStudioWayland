@@ -392,18 +392,18 @@ ObjColorPanel::ObjColorPanel(wxWindow *parent, Slic3r::ObjDialogInOut &in_out, c
                 m_left_image_button     = new wxButton(m_two_image_panel, wxID_ANY, {}, wxDefaultPosition,
                                                    wxSize(FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH), FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH)), wxBORDER_NONE | wxBU_AUTODRAW);
                 m_left_sizer_thumbnail  = create_sizer_thumbnail(m_left_image_button, true);
-                m_two_image_panel_sizer->Add(m_left_sizer_thumbnail, FromDIP(0), wxALIGN_LEFT | wxEXPAND | wxTOP | wxBOTTOM, FromDIP(8));
+                m_two_image_panel_sizer->Add(m_left_sizer_thumbnail, FromDIP(0), wxEXPAND | wxTOP | wxBOTTOM, FromDIP(8));
                 m_two_image_panel_sizer->AddSpacer(FromDIP(10));
 
                 m_right_image_button    = new wxButton(m_two_image_panel, wxID_ANY, {}, wxDefaultPosition,
                                                     wxSize(FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH), FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH)), wxBORDER_NONE | wxBU_AUTODRAW);
                 m_right_sizer_thumbnail = create_sizer_thumbnail(m_right_image_button, false);
-                m_two_image_panel_sizer->Add(m_right_sizer_thumbnail, FromDIP(0), wxALIGN_LEFT | wxEXPAND | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(8));
+                m_two_image_panel_sizer->Add(m_right_sizer_thumbnail, FromDIP(0), wxEXPAND | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(8));
                 m_two_image_panel->SetSizer(m_two_image_panel_sizer);
                 m_two_image_panel->Layout();
                 m_two_image_panel->Fit();
 
-                m_sizer_simple->Add(m_two_image_panel, FromDIP(0), wxALIGN_CENTER | wxALL, FromDIP(0));//wxALIGN_LEFT | wxEXPAND | wxTOP, FromDIP(2));
+                m_sizer_simple->Add(m_two_image_panel, FromDIP(0), wxALIGN_CENTER | wxALL, FromDIP(0));//wxEXPAND | wxTOP, FromDIP(2));
 
                 m_two_image_panel->SetBackgroundColor(wxGetApp().dark_mode() ? wxColour(48, 48, 48, 100) : wxColour(246, 246, 246, 100));
                 m_left_image_button->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour(61, 61, 61, 0) : wxColour(238, 238, 238, 0));

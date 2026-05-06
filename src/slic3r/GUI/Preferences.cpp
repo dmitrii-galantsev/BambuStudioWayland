@@ -229,7 +229,7 @@ wxBoxSizer *PreferencesDialog::create_item_language_combobox(
         if (combobox->GetSelection() == m_current_language_selected)
             return;
 
-        if (e.GetString().mb_str() != app_config->get(param)) {
+        if (std::string(e.GetString().mb_str()) != app_config->get(param)) {
             {
                 //check if the project has changed
                 if (wxGetApp().plater()->is_project_dirty()) {
@@ -1805,7 +1805,7 @@ wxWindow* PreferencesDialog::create_debug_page()
 
 void PreferencesDialog::on_select_radio(std::string param)
 {
-    RadioSelectorList::Node *node    = m_radio_group.GetFirst();
+    RadioSelectorList::compatibility_iterator node    = m_radio_group.GetFirst();
     auto                     groupid = 0;
 
     while (node) {
@@ -1825,7 +1825,7 @@ void PreferencesDialog::on_select_radio(std::string param)
 
 wxString PreferencesDialog::get_select_radio(int groupid)
 {
-    RadioSelectorList::Node *node = m_radio_group.GetFirst();
+    RadioSelectorList::compatibility_iterator node = m_radio_group.GetFirst();
     while (node) {
         RadioSelector *rs = node->GetData();
         if (rs->m_groupid == groupid && rs->m_radiobox->GetValue()) { return rs->m_param_name; }
@@ -1837,7 +1837,7 @@ wxString PreferencesDialog::get_select_radio(int groupid)
 
 void PreferencesDialog::OnSelectRadio(wxMouseEvent &event)
 {
-    RadioSelectorList::Node *node    = m_radio_group.GetFirst();
+    RadioSelectorList::compatibility_iterator node    = m_radio_group.GetFirst();
     auto                     groupid = 0;
 
     while (node) {

@@ -9,7 +9,7 @@
 #include "3DScene.hpp"
 #include "OpenGLManager.hpp"
 
-#include <GL/glew.h>
+#include <glad/gl.h>
 
 #include <wx/image.h>
 #include <boost/filesystem.hpp>
@@ -436,7 +436,7 @@ bool GLTexture::load_from_svg_files_as_sprites_array(const std::vector<std::stri
     glsafe(::glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
     glsafe(::glGenTextures(1, &m_id));
     glsafe(::glBindTexture(GL_TEXTURE_2D, m_id));
-    if (compress && GLEW_EXT_texture_compression_s3tc)
+    if (compress && GLAD_GL_EXT_texture_compression_s3tc)
         glsafe(::glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, (GLsizei)m_width, (GLsizei)m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (const void*)data.data()));
     else
         glsafe(::glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)m_width, (GLsizei)m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (const void*)data.data()));
@@ -564,7 +564,7 @@ bool GLTexture::generate_from_text(const std::string &text_str, wxFont &font, wx
     glsafe(::glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
     glsafe(::glGenTextures(1, &m_id));
     glsafe(::glBindTexture(GL_TEXTURE_2D, (GLuint)m_id));
-    if (GLEW_EXT_texture_compression_s3tc)
+    if (GLAD_GL_EXT_texture_compression_s3tc)
         glsafe(::glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, (GLsizei)m_width, (GLsizei)m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (const void*)data.data()));
     else
         glsafe(::glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)m_width, (GLsizei)m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (const void*)data.data()));
@@ -669,7 +669,7 @@ bool GLTexture::generate_texture_from_text(const std::string& text_str, wxFont& 
     glsafe(::glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
     glsafe(::glGenTextures(1, &m_id));
     glsafe(::glBindTexture(GL_TEXTURE_2D, (GLuint)m_id));
-    if (GLEW_EXT_texture_compression_s3tc)
+    if (GLAD_GL_EXT_texture_compression_s3tc)
         glsafe(::glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, (GLsizei)m_width, (GLsizei)m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (const void*)data.data()));
     else
         glsafe(::glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)m_width, (GLsizei)m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (const void*)data.data()));
@@ -935,7 +935,7 @@ void GLTexture::shutdown()
 
 bool GLTexture::load_from_png(const std::string& filename, bool use_mipmaps, ECompressionType compression_type, bool apply_anisotropy)
 {
-    bool compression_enabled = (compression_type != None) && GLEW_EXT_texture_compression_s3tc;
+    bool compression_enabled = (compression_type != None) && GLAD_GL_EXT_texture_compression_s3tc;
 
     // Load a PNG with an alpha channel.
     wxImage image;
@@ -1085,7 +1085,7 @@ bool GLTexture::load_from_png(const std::string& filename, bool use_mipmaps, ECo
 
 bool GLTexture::load_from_svg(const std::string& filename, bool use_mipmaps, bool compress, bool apply_anisotropy, unsigned int max_size_px)
 {
-    bool compression_enabled = compress && GLEW_EXT_texture_compression_s3tc;
+    bool compression_enabled = compress && GLAD_GL_EXT_texture_compression_s3tc;
 
     NSVGimage* image = nsvgParseFromFile(filename.c_str(), "px", 96.0f);
     if (image == nullptr) {

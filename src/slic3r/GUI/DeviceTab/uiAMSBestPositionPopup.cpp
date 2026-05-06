@@ -578,7 +578,7 @@ void UiAMS::init()
     }
     // amsPanel->SetSizer(amsPanelSizer);
     // mainSizer->AddStretchSpacer();
-    mainSizer->Add(amsPanelSizer, 0, wxALIGN_CENTER | wxEXPAND | wxALL, FromDIP(5));
+    mainSizer->Add(amsPanelSizer, 0, wxEXPAND | wxALL, FromDIP(5));
     // mainSizer->AddStretchSpacer();
     SetSizer(mainSizer);
 }
@@ -684,7 +684,7 @@ ReselectMachineDialog::ReselectMachineDialog(wxWindow* parent)
     mainSizer->Add(0, FromDIP(20));
     mainSizer->Add(textPanel, 0, wxALIGN_LEFT | wxLEFT, FromDIP(26));
     mainSizer->Add(0, FromDIP(12));
-    mainSizer->Add(summaryText, 0, wxALIGN_LEFT | wxLEFT | wxEXPAND, FromDIP(30));
+    mainSizer->Add(summaryText, 0, wxLEFT | wxEXPAND, FromDIP(30));
     mainSizer->Add(0, FromDIP(15));
     mainSizer->Add(filamentSwitch, 0, wxALIGN_LEFT | wxLEFT, FromDIP(26));
     // mainSizer->Add(m_bitmapSelectMachine, 0,  wxALIGN_LEFT | wxLEFT, FromDIP(214));

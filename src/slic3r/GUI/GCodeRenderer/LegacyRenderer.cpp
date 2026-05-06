@@ -26,7 +26,7 @@
 #include "libslic3r/Layer.hpp"
 #include "slic3r/GUI/Widgets/ProgressDialog.hpp"
 #include <imgui/imgui_internal.h>
-#include <GL/glew.h>
+#include <glad/gl.h>
 #include <boost/log/trivial.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/nowide/cstdio.hpp>

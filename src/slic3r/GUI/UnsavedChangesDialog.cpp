@@ -1797,7 +1797,7 @@ void UnsavedChangesDialog::update_tree(Preset::Type type, PresetCollection* pres
                     category = category + (wxString(" {") + (extruder_id->values[variant_index] == 1 ? _L("Left: ") : _L("Right: "))
                             + L(extruder_variant->values[variant_index]) + "}");
                 else
-                    category = category + (" {" + L(extruder_variant->values[variant_index]) + "}");
+                    category = category + (wxString(" {") + L(extruder_variant->values[variant_index]) + "}");
             }
 
             /*m_tree->Append(opt_key, type, option.category_local, option.group_local, option.label_local,

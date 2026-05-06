@@ -50,7 +50,7 @@
 #ifdef __APPLE__
 #include "libslic3r/MacUtils.hpp"
 #endif
-#include <GL/glew.h>
+#include <glad/gl.h>
 
 #include <wx/glcanvas.h>
 #include <wx/bitmap.h>
@@ -59,6 +59,7 @@
 #include <wx/settings.h>
 #include <wx/tooltip.h>
 #include <wx/debug.h>
+#include <wx/utils.h>
 #include <wx/fontutil.h>
 // Print now includes tbb, and tbb includes Windows. This breaks compilation of wxWidgets if included before wx.
 #include "libslic3r/Print.hpp"
@@ -1652,8 +1653,8 @@ void GLCanvas3D::on_change_color_mode(bool is_dark, bool reinit) {
     // Preview Slider
     IMSlider* m_layers_slider = get_gcode_viewer().get_layers_slider();
     IMSlider* m_moves_slider = get_gcode_viewer().get_moves_slider();
-    m_layers_slider->on_change_color_mode(is_dark);
-    m_moves_slider->on_change_color_mode(is_dark);
+    if (m_layers_slider) m_layers_slider->on_change_color_mode(is_dark);
+    if (m_moves_slider) m_moves_slider->on_change_color_mode(is_dark);
     // Partplate
     wxGetApp().plater()->get_partplate_list().on_change_color_mode(is_dark);
 
@@ -2806,13 +2807,14 @@ void GLCanvas3D::render(bool only_init)
     wxGetApp().imgui()->render();
     ogl_manager.unbind_vao();
     ogl_manager.clear_dirty();
-    m_canvas->SwapBuffers();
+    if (m_canvas->IsShownOnScreen()) {
+        m_canvas->SwapBuffers();
+        m_render_stats.increment_fps_counter();
+    }
 
     for (const auto& cb : m_frame_callback_list) {
         cb();
     }
-
-    m_render_stats.increment_fps_counter();
 }
 
 void GLCanvas3D::render_thumbnail(ThumbnailData &         thumbnail_data,
@@ -5678,11 +5680,19 @@ void GLCanvas3D::on_mouse(wxMouseEvent& evt)
 
 void GLCanvas3D::on_paint(wxPaintEvent& evt)
 {
-    if (m_initialized)
+    if (m_initialized) {
+#ifdef __WXMSW__
+        // Idle events are not dispatched during the Windows resize modal loop,
+        // so render immediately to avoid blank frames.
+        _refresh_if_shown_on_screen();
+        m_dirty = false;
+#else
         m_dirty = true;
-    else
+#endif
+    } else {
         // Call render directly, so it gets initialized immediately, not from On Idle handler.
         this->render();
+    }
 }
 
 void GLCanvas3D::on_kill_focus(wxFocusEvent &evt)
