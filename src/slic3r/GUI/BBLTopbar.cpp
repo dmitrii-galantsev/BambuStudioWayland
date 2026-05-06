@@ -473,6 +473,8 @@ wxMenu* BBLTopbar::GetCalibMenu()
 
 void BBLTopbar::SetTitle(wxString title)
 {
+    // LOCAL: prepend custom-build marker so it's obvious which binary is running.
+    title = wxString("[forked] ") + title;
     wxGCDC dc(this);
     title = wxControl::Ellipsize(title, dc, wxELLIPSIZE_END, FromDIP(TOPBAR_TITLE_WIDTH));
 
