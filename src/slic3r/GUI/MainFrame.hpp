@@ -361,6 +361,7 @@ public:
     void RunScript(wxString js);
     void RunScriptLeft(wxString js);
     void show_device(bool bBBLPrinter);
+    void fit_tab_labels(); // ORCA: shrink top-tab labels to icon-only when window is too narrow
 
     // OrcaSlicer calibration
     PA_Calibration_Dlg *         m_pa_calib_dlg{nullptr};

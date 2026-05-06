@@ -5777,6 +5777,13 @@ std::string GUI_App::format_display_version()
         else
             ++j;
     }
+    // LOCAL: surface SLIC3R_BUILD_ID's suffix (e.g. "-forked") in About dialog and titles.
+    {
+        std::string build_id = SLIC3R_BUILD_ID;
+        std::string ver_raw  = SLIC3R_VERSION;
+        if (build_id.size() > ver_raw.size() && build_id.compare(0, ver_raw.size(), ver_raw) == 0)
+            version_display += build_id.substr(ver_raw.size());
+    }
     return version_display;
 }
 

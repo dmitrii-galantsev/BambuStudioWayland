@@ -1,4 +1,5 @@
-#include <GL/glew.h>
+// LOCAL: project migrated GLEW -> GLAD2; OpenGLManager already loads GL.
+#include <glad/gl.h>
 
 #include "TextureImportDialog.hpp"
 #include "I18N.hpp"
@@ -991,13 +992,7 @@ void TexturePreviewCanvas::ensure_gl_ready()
 {
     if (m_gl_initialized) return;
 
-    glewExperimental = GL_TRUE;
-    GLenum err = glewInit();
-    if (err != GLEW_OK) {
-        BOOST_LOG_TRIVIAL(error) << "TexturePreviewCanvas: glewInit failed: "
-                                 << glewGetErrorString(err);
-        return;
-    }
+    // GLAD is loaded globally by OpenGLManager::init_gl(); no per-canvas reinit needed.
     while (glGetError() != GL_NO_ERROR) {}
 
     m_gl_initialized = true;

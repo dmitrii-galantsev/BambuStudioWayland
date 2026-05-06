@@ -400,6 +400,8 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
         Refresh();
         Layout();
         wxQueueEvent(wxGetApp().plater(), new SimpleEvent(EVT_NOTICE_CHILDE_SIZE_CHANGED));
+
+        fit_tab_labels(); // ORCA on resize
         });
 
     //BBS
@@ -1352,6 +1354,7 @@ void MainFrame::init_tabpanel()
                 wxPostEvent(m_plater, SimpleEvent(EVT_GLVIEWTOOLBAR_PREVIEW));
                 m_param_panel->OnActivate();
             }
+            fit_tab_labels(); // ORCA on switching prepare / preview
         }
         //else if (panel == m_param_panel)
         //    m_param_panel->OnActivate();
@@ -1499,6 +1502,38 @@ void MainFrame::show_device(bool bBBLPrinter) {
                           std::string("tab_monitor_active"), false);
     }
   }
+  fit_tab_labels(); // ORCA on printer change
+}
+
+// ORCA: shrink top-tab labels right-to-left until they fit next to the slice/print buttons.
+// Bambu adds extra widgets (helio + split line) and a stretch-spacer to the LEFT of the
+// slice button, so when the side-tools overflow the row, m_slice_option_btn ends up off-screen
+// and Orca's "gap to slice button" check stays positive forever. Measure to the rightmost
+// widget (m_print_btn) against the window's right edge instead.
+void MainFrame::fit_tab_labels()
+{
+    if (!m_tabpanel || !m_print_btn || !m_print_btn->IsShown())
+        return;
+
+    auto* ctrl  = m_tabpanel->GetBtnsListCtrl();
+    auto* sizer = ctrl->GetBtnsSizer();
+    int   count = sizer->GetItemCount();
+
+    // Restore all
+    for (size_t i = 1; i < (size_t)count; ++i)
+        ctrl->SetCompact(i, false);
+    m_tabpanel->Refresh();
+    Layout();
+
+    // Compact (last to first) until the print button fits inside the window
+    for (size_t i = count - 1; i >= 1; --i) {
+        int print_right  = m_print_btn->GetScreenRect().GetRight();
+        int window_right = this->GetScreenRect().GetRight();
+        if (window_right - print_right - FromDIP(15) > 0) return;
+        ctrl->SetCompact(i, true);
+        m_tabpanel->Refresh();
+        Layout();
+    }
 }
 
 
@@ -2106,6 +2141,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                 m_slice_enable = get_enable_slice_status();
                 m_slice_btn->Enable(m_slice_enable);
                 this->Layout();
+                fit_tab_labels(); // ORCA on label change
                 if(m_slice_option_pop_up)
                     m_slice_option_pop_up->Dismiss();
                 });
@@ -2117,6 +2153,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                 m_slice_enable = get_enable_slice_status();
                 m_slice_btn->Enable(m_slice_enable);
                 this->Layout();
+                fit_tab_labels(); // ORCA on label change
                 if(m_slice_option_pop_up)
                     m_slice_option_pop_up->Dismiss();
                 });
@@ -2142,6 +2179,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
                     this->Layout();
+                    fit_tab_labels(); // ORCA on label change
                     p->Dismiss();
                     });
 
@@ -2154,6 +2192,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
                     this->Layout();
+                    fit_tab_labels(); // ORCA on label change
                     p->Dismiss();
                     });
 
@@ -2166,6 +2205,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
                     this->Layout();
+                    fit_tab_labels(); // ORCA on label change
                     p->Dismiss();
                     });*/
 
@@ -2193,6 +2233,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
                     this->Layout();
+                    fit_tab_labels(); // ORCA on label change
                     p->Dismiss();
                     });
 
@@ -2204,6 +2245,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
                     this->Layout();
+                    fit_tab_labels(); // ORCA on label change
                     p->Dismiss();
                     });
 
@@ -2213,6 +2255,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
                     this->Layout();
+                    fit_tab_labels(); // ORCA on label change
                     p->Dismiss();
                     });
 
@@ -2224,6 +2267,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
                     this->Layout();
+                    fit_tab_labels(); // ORCA on label change
                     p->Dismiss();
                     });
 
@@ -2233,6 +2277,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
                     this->Layout();
+                    fit_tab_labels(); // ORCA on label change
                     p->Dismiss();
                     });
 
@@ -2242,6 +2287,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                     m_print_enable = get_enable_print_status();
                     m_print_btn->Enable(m_print_enable);
                     this->Layout();
+                    fit_tab_labels(); // ORCA on label change
                     p->Dismiss();
                     });
 
@@ -2264,6 +2310,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                         m_print_enable = get_enable_print_status();
                         m_print_btn->Enable(m_print_enable);
                         this->Layout();
+                        fit_tab_labels(); // ORCA on label change
                         p->Dismiss();
                     });
                 }
@@ -2278,6 +2325,7 @@ wxBoxSizer* MainFrame::create_side_tools()
                         m_print_enable = get_enable_print_status();
                         m_print_btn->Enable(m_print_enable);
                         this->Layout();
+                        fit_tab_labels(); // ORCA on label change
                         p->Dismiss();
                         });
                     p->append_button(print_multi_machine_btn);
@@ -2592,6 +2640,8 @@ void MainFrame::on_dpi_changed(const wxRect& suggested_rect)
     this->SetSize(sz);
 
     this->Maximize(is_maximized);
+
+    fit_tab_labels(); // ORCA
 }
 
 void MainFrame::on_sys_color_changed()

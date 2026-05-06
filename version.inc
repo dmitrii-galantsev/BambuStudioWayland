@@ -14,6 +14,8 @@ endif()
 # The build_version should start from 50 in master branch
 
 set(SLIC3R_VERSION "02.07.00.55")
+# LOCAL custom build marker, surfaced in About dialog and 3MF metadata.
+set(SLIC3R_BUILD_ID "${SLIC3R_VERSION}-forked")
 
 string(REPLACE "." "," SLIC3R_COMMA_SEPARATED_VERSION ${SLIC3R_VERSION})
 set(SLIC3R_COMMA_SEPARATED_VERSION "${SLIC3R_COMMA_SEPARATED_VERSION}")
