@@ -15,7 +15,7 @@
 #include "OpenGLManager.hpp"
 #include "PartPlate.hpp"
 
-#include <GL/glew.h>
+#include <glad/gl.h>
 
 #include <cmath>
 #include <boost/algorithm/string/predicate.hpp>

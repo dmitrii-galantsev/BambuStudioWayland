@@ -662,7 +662,7 @@ wxBoxSizer* AMSDryCtrWin::create_guide_info_filament(wxPanel* parent)
 
     m_ams_filament_panel = new AMSFilamentPanel(parent, "");
 
-    filament_section->Add(m_ams_filament_panel, 0, wxEXPAND | wxALL | wxALIGN_CENTER_HORIZONTAL, FromDIP(5));
+    filament_section->Add(m_ams_filament_panel, 0, wxEXPAND | wxALL, FromDIP(5));
 
     return filament_section;
 }
@@ -705,7 +705,7 @@ wxBoxSizer* AMSDryCtrWin::create_guide_info_section(wxPanel* parent)
     Label* toggle_description = new Label(parent, _L("Rotate spool when drying"), LB_AUTO_WRAP);
     toggle_description->SetForegroundColour(*wxBLACK);
     toggle_description->SetFont(Label::Body_12);
-    toggle_section->Add(toggle_description, 1, wxALIGN_CENTER_VERTICAL | wxEXPAND, 0);
+    toggle_section->Add(toggle_description, 1, wxEXPAND, 0);
 
     info_section->Add(toggle_section, 0, wxEXPAND | wxALL, FromDIP(5));
 

@@ -241,7 +241,7 @@ void wgtDeviceNozzleRackHotendUpdate::CreateGui()
     type_sizer_row_2->Add(m_type_label, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(2));
 
     main_type_sizer->Add(type_sizer_row_1, 0, wxALIGN_LEFT);
-    main_type_sizer->Add(type_sizer_row_2, 1, wxALIGN_LEFT | wxEXPAND | wxTOP, FromDIP(4));
+    main_type_sizer->Add(type_sizer_row_2, 1, wxEXPAND | wxTOP, FromDIP(4));
     type_panel->SetSizer(main_type_sizer);
     type_panel->SetMaxSize(WX_DIP_SIZE(160, 40));
     type_panel->SetMinSize(WX_DIP_SIZE(160, 40));
@@ -377,7 +377,7 @@ void wgtDeviceNozzleRackHotendUpdate::OnBitmapHoverEnter(wxMouseEvent& event)
 
     m_hoverFrame = new wxFrame(nullptr, wxID_ANY, "", 
                                 wxDefaultPosition, wxDefaultSize, 
-                                wxFRAME_NO_TASKBAR | wxBORDER_NONE | wxTRANSPARENT_WINDOW);
+                                wxFRAME_NO_TASKBAR | wxBORDER_NONE);
     m_hoverFrame->SetBackgroundColour(WGT_DEVICE_NOZZLE_RACK_HOTEND_UPDATE_DEFAULT_BG);
     m_hoverFrame->SetSize(scaledW, scaledH);
     wxBoxSizer* frameSizer = new wxBoxSizer(wxVERTICAL);

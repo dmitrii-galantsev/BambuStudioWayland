@@ -41,7 +41,7 @@ static wxPanel* s_create_title(wxWindow *parent, const wxString& text)
     wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
     sizer->Add(0, 0, 0, wxEXPAND, 0);
     sizer->Add(title, 0, wxALIGN_CENTER, 0);
-    sizer->Add(split_line, 1, wxALIGN_CENTER_VERTICAL | wxEXPAND, 0);
+    sizer->Add(split_line, 1, wxEXPAND, 0);
     panel->SetSizer(sizer);
     panel->Layout();
     return panel;

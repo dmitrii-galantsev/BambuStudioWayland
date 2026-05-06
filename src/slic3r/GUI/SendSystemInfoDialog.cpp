@@ -27,7 +27,7 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/uuid/detail/md5.hpp>
 
-#include "GL/glew.h"
+#include <glad/gl.h>
 
 #include <wx/display.h>
 #include <wx/htmllbox.h>
@@ -480,7 +480,7 @@ static std::string generate_system_info_json()
         monitor_node.put("height", display.GetGeometry().GetHeight());
 
         // Only get the scaling on Win, it is not reliable on other platforms.
-        #if defined(_WIN32) && wxCHECK_VERSION(3, 1, 2)
+        #if defined(_WIN32)
             double scaling = display.GetPPI().GetWidth() / 96.;
             std::stringstream ss;
             ss << std::setprecision(3) << scaling;

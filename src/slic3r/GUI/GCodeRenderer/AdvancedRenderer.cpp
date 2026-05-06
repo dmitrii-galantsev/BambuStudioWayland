@@ -7,7 +7,7 @@
 #include "slic3r/GUI/IMSlider.hpp"
 #include "slic3r/GUI/MainFrame.hpp"
 #include "slic3r/GUI/Plater.hpp"
-#include <GL/glew.h>
+#include <glad/gl.h>
 #include <boost/nowide/cstdio.hpp>
 #include <wx/numformatter.h>
 namespace
@@ -340,13 +340,13 @@ namespace Slic3r
                 case EViewType::VolumetricRate:
                 {
                     fprintf(fp, "map_Kd range_color.png\n");
-                    export_image(m_p_color_range_texture, parent_path.wstring() + "/range_color.png");
+                    export_image(m_p_color_range_texture, parent_path.wstring() + L"/range_color.png");
                     break;
                 }
                 case EViewType::FeatureType:
                 {
                     fprintf(fp, "map_Kd Extrusion_Role_Colors.png\n");
-                    export_image(m_p_role_colors_texture, parent_path.wstring() + "/Extrusion_Role_Colors.png");
+                    export_image(m_p_role_colors_texture, parent_path.wstring() + L"/Extrusion_Role_Colors.png");
                     break;
                 }
                 case EViewType::Tool:
@@ -354,7 +354,7 @@ namespace Slic3r
                 case EViewType::ColorPrint:
                 {
                     fprintf(fp, "map_Kd tool_colors.png\n");
-                    export_image(m_p_tool_colors_texture, parent_path.wstring() + "/tool_colors.png");
+                    export_image(m_p_tool_colors_texture, parent_path.wstring() + L"/tool_colors.png");
                     break;
                 }
                 }

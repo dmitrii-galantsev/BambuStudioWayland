@@ -30,6 +30,7 @@
 #include <unordered_set>
 #include <wx/listbook.h>
 #include <wx/numformatter.h>
+#include <wx/utils.h>
 #include <wx/headerctrl.h>
 
 #include "slic3r/Utils/FixModelByWin10.hpp"

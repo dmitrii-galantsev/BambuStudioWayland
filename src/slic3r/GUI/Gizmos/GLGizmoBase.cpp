@@ -2,7 +2,7 @@
 #include "slic3r/GUI/GLCanvas3D.hpp"
 #include "slic3r/GUI/Gizmos/GLGizmosManager.hpp"
 
-#include <GL/glew.h>
+#include <glad/gl.h>
 #include <algorithm>
 
 #include "slic3r/GUI/GUI_App.hpp"
