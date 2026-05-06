@@ -14,7 +14,7 @@
 #include "libslic3r/Print.hpp"
 #include "../Utils/HelioDragon.hpp"
 #include <imgui/imgui_internal.h>
-#include <GL/glew.h>
+#include <glad/gl.h>
 #include <chrono>
 namespace
 {

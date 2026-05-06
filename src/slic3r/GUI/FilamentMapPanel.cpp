@@ -5,6 +5,7 @@
 #include <boost/log/trivial.hpp>
 #include <cassert>
 #include <wx/dcbuffer.h>
+#include <wx/utils.h>
 #include "wx/graphics.h"
 #include <map>
 #include <algorithm>
@@ -291,11 +292,11 @@ FilamentMapManualPanel::FilamentMapManualPanel(wxWindow                       *p
     m_left_panel->SetMinSize({FromDIP(260), FromDIP(110)});
     m_right_panel->SetMinSize({FromDIP(260), FromDIP(110)});
 
-    drag_sizer->Add(m_left_panel, 1, wxALIGN_CENTER | wxEXPAND);
+    drag_sizer->Add(m_left_panel, 1, wxEXPAND);
     drag_sizer->Add(m_switch_btn, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(8));
-    drag_sizer->Add(m_right_panel, 1, wxALIGN_CENTER | wxEXPAND);
+    drag_sizer->Add(m_right_panel, 1, wxEXPAND);
 
-    top_sizer->Add(drag_sizer, 0, wxALIGN_CENTER | wxEXPAND);
+    top_sizer->Add(drag_sizer, 0, wxEXPAND);
 
     m_tips = new Label(this, _L("Tips: You can drag the filaments to reassign them to different nozzles."));
     m_tips->SetFont(Label::Body_13);
@@ -483,8 +484,8 @@ GUI::FilamentMapBtnPanel::FilamentMapBtnPanel(wxWindow *parent, const wxString &
 
     auto label_sizer = new wxBoxSizer(wxHORIZONTAL);
     label_sizer->AddStretchSpacer();
-    label_sizer->Add(m_btn, 0, wxALIGN_CENTER | wxEXPAND | wxLEFT, FromDIP(1));
-    label_sizer->Add(m_label, 0, wxALIGN_CENTER | wxEXPAND| wxALL, FromDIP(3));
+    label_sizer->Add(m_btn, 0, wxEXPAND | wxLEFT, FromDIP(1));
+    label_sizer->Add(m_label, 0, wxEXPAND | wxALL, FromDIP(3));
     label_sizer->AddStretchSpacer();
 
     auto label_width = label_sizer->GetMinSize().GetWidth();
@@ -494,7 +495,7 @@ GUI::FilamentMapBtnPanel::FilamentMapBtnPanel(wxWindow *parent, const wxString &
     m_disable_tip = new Label(this, _L("(Sync with printer)"));
 
     sizer->AddSpacer(FromDIP(20));
-    sizer->Add(label_sizer, 0, wxALIGN_CENTER | wxEXPAND);
+    sizer->Add(label_sizer, 0, wxEXPAND);
     sizer->Add(m_disable_tip, 0, wxALIGN_CENTER);
     sizer->AddSpacer(FromDIP(3));
 
@@ -502,7 +503,7 @@ GUI::FilamentMapBtnPanel::FilamentMapBtnPanel(wxWindow *parent, const wxString &
     m_detail->SetFont(Label::Body_12);
     m_detail->SetForegroundColour(TextNormalGreyColor);
 
-    sizer->Add(m_detail, 1, wxALIGN_CENTER | wxEXPAND);
+    sizer->Add(m_detail, 1, wxEXPAND);
     sizer->AddSpacer(FromDIP(10));
 
     SetSizer(sizer);

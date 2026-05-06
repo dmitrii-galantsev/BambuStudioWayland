@@ -44,7 +44,7 @@ bool TabButton::Create(wxWindow *parent, wxString text, ScalableBitmap &bmp, lon
 {
     StaticBox::Create(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, style);
     newtag_img = ScalableBitmap(this, "monitor_hms_new",7);
-    state_handler.attach({&text_color, &border_color});
+    state_handler.attach(std::vector<StateColor const*>{&text_color, &border_color});
     state_handler.update_binds();
     //BBS set default font
     SetFont(Label::Body_14);

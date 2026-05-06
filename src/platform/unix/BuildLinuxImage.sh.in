@@ -44,6 +44,10 @@ export LD_LIBRARY_PATH="\$DIR/bin"
 # 1) BambuStudio will segfault on systems where locale info is not as expected (i.e. Holo-ISO arch-based distro)
 export LC_ALL=C
 
+# LOCAL: force XWayland to work around wxGTK 3.3 nested wxPopupTransientWindow
+# issue on native Wayland (filament Custom/Bambu submenus get auto-dismissed).
+export GDK_BACKEND=x11
+
 exec "\$DIR/bin/@SLIC3R_APP_CMD@" "\$@"
 EOF
 

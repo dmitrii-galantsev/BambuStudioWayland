@@ -10,6 +10,10 @@
 #include "libslic3r/MacUtils.hpp"
 #endif
 
+#ifdef __WXGTK3__
+#include "../GUI_Utils.hpp"
+#endif
+
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 #include <wx/dcmemory.h>
@@ -29,6 +33,9 @@ SwitchButton::SwitchButton(wxWindow* parent, wxWindowID id)
 	SetBackgroundColour(StaticBox::GetParentBackgroundColor(parent));
 	Bind(wxEVT_TOGGLEBUTTON, [this](auto& e) { update(); e.Skip(); });
 	SetFont(Label::Body_12);
+#ifdef __WXGTK3__
+    Slic3r::GUI::RemoveButtonBorder(this);
+#endif
 	Rescale();
 }
 
@@ -937,7 +944,7 @@ int MultiSwitchButton::AppendOption(const wxString &option, void *clientData)
     btns.push_back(btn);
 
     if (btns.size() > 1) { sizer->AddSpacer(0); }
-    sizer->Add(btn, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL);
+    sizer->Add(btn, 1, wxEXPAND);
     wxSize textSize = btn->GetTextExtent(option);
     wxSize minSize  = wxSize(textSize.x + m_button_padding.x * 2 + 6, -1);
     btn->SetMinSize(minSize);

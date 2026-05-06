@@ -1573,7 +1573,7 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
     sim_text_sizer->Add(simulation_card_subtitle, 0, wxEXPAND | wxTOP, FromDIP(2));
     
     sim_card_sizer->Add(simulation_mode_icon, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(16));
-    sim_card_sizer->Add(sim_text_sizer, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(12));
+    sim_card_sizer->Add(sim_text_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(12));
     sim_card_sizer->Add(0, 0, 0, wxRIGHT, FromDIP(16));  // Spacer instead of check badge
     
     // Add the horizontal content sizer to outer vertical sizer with top/bottom inset padding
@@ -1652,7 +1652,7 @@ void HelioInputDialog::update_mode_card_styling(int selected_action)
     opt_text_sizer->Add(optimization_card_subtitle, 0, wxEXPAND | wxTOP, FromDIP(2));
     
     opt_card_sizer->Add(optimization_mode_icon, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(16));
-    opt_card_sizer->Add(opt_text_sizer, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(12));
+    opt_card_sizer->Add(opt_text_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(12));
     opt_card_sizer->Add(0, 0, 0, wxRIGHT, FromDIP(16));  // Spacer instead of check badge
     
     // Add the horizontal content sizer to outer vertical sizer with top/bottom inset padding

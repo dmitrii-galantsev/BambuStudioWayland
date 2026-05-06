@@ -60,10 +60,10 @@ void wgtMsgPanelItem::CreateGui()
         m_wiki_link->SetVisitedColour(*wxBLUE);
         Bind(wxEVT_HYPERLINK, &wgtMsgPanelItem::OnClickWiki, this, m_wiki_link->GetId());
         text_sizer->AddSpacer(FromDIP(4));
-        text_sizer->Add(m_wiki_link, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND);
+        text_sizer->Add(m_wiki_link, 0, wxEXPAND);
     }
 
-    main_sizer->Add(text_sizer, 0, wxALIGN_LEFT | wxEXPAND);
+    main_sizer->Add(text_sizer, 0, wxEXPAND);
 
     SetSizer(main_sizer);
     Layout();

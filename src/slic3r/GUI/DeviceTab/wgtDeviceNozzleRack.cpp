@@ -136,7 +136,7 @@ public:
 
         wxSizer* title_sizer = new wxBoxSizer(wxHORIZONTAL);
         title_sizer->AddStretchSpacer();
-        title_sizer->Add(m_title_label, 0, wxEXPAND | wxALIGN_CENTER | wxTOP | wxBOTTOM, FromDIP(5));
+        title_sizer->Add(m_title_label, 0, wxEXPAND | wxTOP | wxBOTTOM, FromDIP(5));
         title_sizer->AddStretchSpacer();
         SetSizer(title_sizer);
     };
@@ -508,7 +508,7 @@ void wgtDeviceNozzleRackPos::CreateGui()
     m_btn_rowup->Bind(wxEVT_ENTER_WINDOW, [this](auto&) { SetCursor(wxCURSOR_HAND); });
     m_btn_rowup->Bind(wxEVT_LEAVE_WINDOW, [this](auto&) { SetCursor(wxCURSOR_ARROW); });
     m_btn_rowup->Bind(wxEVT_BUTTON, &wgtDeviceNozzleRackPos::OnMoveRackUp, this);
-    rowa_sizer->Add(m_btn_rowup, 0, wxALIGN_CENTER | wxEXPAND | wxLEFT | wxRIGHT, FromDIP(10));
+    rowa_sizer->Add(m_btn_rowup, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(10));
 
     m_label_rowup_status = new Label(m_rowup_panel);
     m_label_rowup_status->SetFont(Label::Body_12);
@@ -561,9 +561,9 @@ void wgtDeviceNozzleRackPos::CreateGui()
 
     // main sizer
     wxBoxSizer* main_sizer = new wxBoxSizer(wxVERTICAL);
-    main_sizer->Add(m_rowup_panel, 1, wxALIGN_TOP | wxEXPAND | wxALIGN_CENTER);
+    main_sizer->Add(m_rowup_panel, 1, wxEXPAND);
     main_sizer->Add(m_btn_homing, 0, wxALIGN_CENTER | wxTOP | wxBOTTOM, FromDIP(10));
-    main_sizer->Add(m_rowbottom_panel, 1, wxALIGN_BOTTOM | wxEXPAND | wxALIGN_CENTER);
+    main_sizer->Add(m_rowbottom_panel, 1, wxEXPAND);
     SetSizer(main_sizer);
 
     SetMinSize(WX_DIP_SIZE(85, -1));

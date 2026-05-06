@@ -175,6 +175,12 @@ private:
 
 class WebViewWebKit : public wxWebViewWebKit
 {
+public:
+    WebViewWebKit()
+        : wxWebViewWebKit(wxWebView::NewConfiguration(wxWebViewBackendWebKit))
+    {
+    }
+
     ~WebViewWebKit() override
     {
         RemoveScriptMessageHandler("wx");

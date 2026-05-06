@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+#include <glad/gl.h>
 
 #if ENABLE_SMOOTH_NORMALS
 #include <igl/per_face_normals.h>

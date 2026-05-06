@@ -45,7 +45,7 @@ SideButton::SideButton(wxWindow* parent, wxString text, wxString icon, long stly
 
     SetBottomColour(wxColour("#3B4446"));
 
-    state_handler.attach({ &border_color, &text_color, &background_color });
+    state_handler.attach(std::vector<StateColor const*>{ &border_color, &text_color, &background_color });
     state_handler.update_binds();
 
     // icon only
