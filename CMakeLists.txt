@@ -521,13 +521,9 @@ find_package(PNG REQUIRED)
 set(OpenGL_GL_PREFERENCE "LEGACY")
 find_package(OpenGL REQUIRED)
 
-# Find glew or use bundled version
-if (SLIC3R_STATIC AND NOT SLIC3R_STATIC_EXCLUDE_GLEW)
-    set(GLEW_USE_STATIC_LIBS ON)
-    set(GLEW_VERBOSE ON)
-endif()
-
-find_package(GLEW REQUIRED)
+# GLEW has been replaced by GLAD2 (added as add_subdirectory(glad) below).
+# GLAD2 supports both GLX and EGL with the same source, while GLEW must be
+# compiled with one of the two — required for native Wayland.
 
 find_package(glfw3 REQUIRED)
 

@@ -8,7 +8,7 @@
 #include "slic3r/GUI/MainFrame.hpp"
 #include "libslic3r/ClipperUtils.hpp"
 #include "libslic3r/Geometry/ConvexHull.hpp"
-#include <GL/glew.h>
+#include <glad/gl.h>
 #include <boost/nowide/cstdio.hpp>
 #include <wx/numformatter.h>
 namespace

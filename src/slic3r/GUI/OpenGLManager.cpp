@@ -8,7 +8,7 @@
 #include "libslic3r/Platform.hpp"
 #include "slic3r/GUI/GLTexture.hpp"
 
-#include <GL/glew.h>
+#include <glad/gl.h>
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -217,7 +217,7 @@ void OpenGLManager::GLInfo::detect() const
     if (Slic3r::total_physical_memory() / (1024 * 1024 * 1024) < 6)
         *max_tex_size /= 2;
 
-    if (GLEW_EXT_texture_filter_anisotropic) {
+    if (GLAD_GL_EXT_texture_filter_anisotropic) {
         float* max_anisotropy = const_cast<float*>(&m_max_anisotropy);
         glsafe(::glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, max_anisotropy));
     }
@@ -349,15 +349,27 @@ bool OpenGLManager::init()
 bool OpenGLManager::init_gl(bool popup_error)
 {
     if (!m_gl_initialized) {
-        glewExperimental = GL_TRUE;
-        GLenum result = glewInit();
-        if (result != GLEW_OK) {
-            BOOST_LOG_TRIVIAL(error) << "Unable to init glew library";
+        int version = 0;
+#if defined(__WXGTK__) && defined(wxHAS_EGL)
+        if (Slic3r::GUI::is_running_on_wayland()) {
+            // On EGL/Wayland, gladLoaderLoadGL() dlopen's libGL.so then
+            // immediately dlclose's it. Since nothing else holds libGL.so
+            // open (unlike GLX where the context keeps it loaded), the
+            // library gets unmapped and all function pointers become invalid.
+            // Use eglGetProcAddress directly to avoid this.
+            version = gladLoadGL((GLADloadfunc)eglGetProcAddress);
+        } else
+#endif
+        {
+            version = gladLoaderLoadGL();
+        }
+        if (version == 0) {
+            BOOST_LOG_TRIVIAL(error) << "Unable to init GLAD OpenGL loader";
             return false;
         }
-	//BOOST_LOG_TRIVIAL(info) << "glewInit Success."<< std::endl;
+        BOOST_LOG_TRIVIAL(info) << "GLAD loaded OpenGL " << GLAD_VERSION_MAJOR(version) << "." << GLAD_VERSION_MINOR(version);
         m_gl_initialized = true;
-        if (GLEW_EXT_texture_compression_s3tc)
+        if (GLAD_GL_EXT_texture_compression_s3tc)
             s_compressed_textures_supported = true;
         else
             s_compressed_textures_supported = false;
@@ -368,11 +380,11 @@ bool OpenGLManager::init_gl(bool popup_error)
             s_framebuffers_type = EFramebufferType::Supported;
             BOOST_LOG_TRIVIAL(info) << "Opengl version >= 30, FrameBuffer normal." << std::endl;
         }
-        else if (GLEW_ARB_framebuffer_object) {
+        else if (GLAD_GL_ARB_framebuffer_object) {
             s_framebuffers_type = EFramebufferType::Arb;
             BOOST_LOG_TRIVIAL(info) << "Found Framebuffer Type ARB."<< std::endl;
         }
-        else if (GLEW_EXT_framebuffer_object) {
+        else if (GLAD_GL_EXT_framebuffer_object) {
             BOOST_LOG_TRIVIAL(info) << "Found Framebuffer Type Ext."<< std::endl;
             s_framebuffers_type = EFramebufferType::Ext;
         }
@@ -388,9 +400,10 @@ bool OpenGLManager::init_gl(bool popup_error)
             m_vao_type = EVAOType::Apple;
         }
 #endif
-        else if (GLEW_ARB_vertex_array_object) {
-            m_vao_type = EVAOType::Arb;
-        }
+        // GLAD2 build does not include the ARB_vertex_array_object flag
+        // (only ARB_framebuffer_object and EXT_* are generated). For pre-GL 3.0
+        // we have no usable fallback here; the EVAOType::Arb branch is dead
+        // on this build. VAO is core in GL 3.0+ which is what we target.
 
         bool valid_version = s_gl_info.is_version_greater_or_equal_to(2, 0);
         if (!valid_version) {
@@ -713,7 +726,7 @@ void OpenGLManager::blit_framebuffer(const std::string& source, const std::strin
         return;
     }
     if (s_back_frame == source) {
-        glsafe(BBS_GL_EXTENSION_FUNC(::glBindFramebuffer)(BBS_GL_EXTENSION_PARAMETER(GL_READ_FRAMEBUFFER), 0));
+        glsafe(::glBindFramebuffer(GL_READ_FRAMEBUFFER, 0));
     }
     else
     {
@@ -722,11 +735,11 @@ void OpenGLManager::blit_framebuffer(const std::string& source, const std::strin
             return;
         }
         const uint32_t source_id = iter->second->get_gl_id();
-        glsafe(BBS_GL_EXTENSION_FUNC(::glBindFramebuffer)(BBS_GL_EXTENSION_PARAMETER(GL_READ_FRAMEBUFFER), source_id));
+        glsafe(::glBindFramebuffer(GL_READ_FRAMEBUFFER, source_id));
     }
 
     if (s_back_frame == target) {
-        glsafe(BBS_GL_EXTENSION_FUNC(::glBindFramebuffer)(BBS_GL_EXTENSION_PARAMETER(GL_DRAW_FRAMEBUFFER), 0));
+        glsafe(::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
     }
     else
     {
@@ -735,7 +748,7 @@ void OpenGLManager::blit_framebuffer(const std::string& source, const std::strin
             return;
         }
         const uint32_t target_id = iter->second->get_gl_id();
-        glsafe(BBS_GL_EXTENSION_FUNC(::glBindFramebuffer)(BBS_GL_EXTENSION_PARAMETER(GL_DRAW_FRAMEBUFFER), target_id));
+        glsafe(::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target_id));
     }
 
     glsafe(::glBlitFramebuffer(0, 0, m_viewport_width, m_viewport_height, 0, 0, m_viewport_width, m_viewport_height, GL_COLOR_BUFFER_BIT, GL_LINEAR));
@@ -1005,7 +1018,7 @@ uint32_t OpenGLManager::get_format_size(ETextureFormat format)
 
 uint32_t OpenGLManager::get_target(ESamplerType t_sampler_type)
 {
-    GLenum target = GLU_INVALID_ENUM;
+    GLenum target = GL_INVALID_ENUM;
     switch (t_sampler_type)
     {
     case ESamplerType::Sampler2D:
@@ -1243,7 +1256,7 @@ void FrameBuffer::create_msaa_fbo()
     glsafe(BBS_GL_EXTENSION_FUNC(::glGenRenderbuffers)(2, m_msaa_back_buffer_rbos));
 
     glsafe(BBS_GL_EXTENSION_FUNC(::glBindRenderbuffer)(BBS_GL_EXTENSION_PARAMETER(GL_RENDERBUFFER), m_msaa_back_buffer_rbos[0]));
-    glsafe(BBS_GL_EXTENSION_FUNC(::glRenderbufferStorageMultisample)(BBS_GL_EXTENSION_PARAMETER(GL_RENDERBUFFER), m_msaa, GL_RGBA8, m_width, m_height));
+    glsafe(::glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_msaa, GL_RGBA8, m_width, m_height));
 
     glsafe(BBS_GL_EXTENSION_FUNC(::glBindRenderbuffer)(BBS_GL_EXTENSION_PARAMETER(GL_RENDERBUFFER), m_msaa_back_buffer_rbos[1]));
     glsafe(::glRenderbufferStorageMultisample(BBS_GL_EXTENSION_PARAMETER(GL_RENDERBUFFER), m_msaa, GL_DEPTH24_STENCIL8, m_width, m_height));
@@ -1319,8 +1332,8 @@ void FrameBuffer::resolve()
 
     glsafe(::glDisable(GL_SCISSOR_TEST));
 
-    glsafe(BBS_GL_EXTENSION_FUNC(::glBindFramebuffer)(BBS_GL_EXTENSION_PARAMETER(GL_READ_FRAMEBUFFER), m_gl_id_for_back_fbo));
-    glsafe(BBS_GL_EXTENSION_FUNC(::glBindFramebuffer)(BBS_GL_EXTENSION_PARAMETER(GL_DRAW_FRAMEBUFFER), m_gl_id));
+    glsafe(::glBindFramebuffer(GL_READ_FRAMEBUFFER, m_gl_id_for_back_fbo));
+    glsafe(::glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_gl_id));
 
     if (EBlitOptionType::Color & m_blit_option_type) {
         glsafe(::glBlitFramebuffer(0, 0, m_width, m_height, 0, 0, m_width, m_height, GL_COLOR_BUFFER_BIT, GL_NEAREST));

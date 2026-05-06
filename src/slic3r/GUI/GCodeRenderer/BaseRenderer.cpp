@@ -10,7 +10,7 @@
 #include "libslic3r/Print.hpp"
 #include "../Utils/HelioDragon.hpp"
 #include <imgui/imgui_internal.h>
-#include <GL/glew.h>
+#include <glad/gl.h>
 namespace
 {
     std::string get_view_type_string(Slic3r::GUI::gcode::EViewType view_type)

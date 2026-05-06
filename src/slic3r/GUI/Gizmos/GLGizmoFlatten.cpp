@@ -11,7 +11,7 @@
 
 #include <numeric>
 #include <imgui/imgui_internal.h>
-#include <GL/glew.h>
+#include <glad/gl.h>
 
 namespace Slic3r {
 namespace GUI {

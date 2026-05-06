@@ -32,7 +32,7 @@
 #include <codecvt>
 #include <boost/log/trivial.hpp>
 
-#include <GL/glew.h>
+#include <glad/gl.h>
 
 #include "imgui/imgui_stdlib.h" // using std::string for inputs
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
