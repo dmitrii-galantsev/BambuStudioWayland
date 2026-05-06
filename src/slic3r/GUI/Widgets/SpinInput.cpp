@@ -55,7 +55,7 @@ void SpinInput::Create(wxWindow *parent,
     StaticBox::Create(parent, wxID_ANY, pos, size);
     SetFont(Label::Body_12);
     wxWindow::SetLabel(label);
-    state_handler.attach({&label_color, &text_color});
+    state_handler.attach(std::vector<StateColor const*>{&label_color, &text_color});
     state_handler.update_binds();
     text_ctrl = new TextCtrl(this, wxID_ANY, text, {20, 4}, wxDefaultSize, style | wxBORDER_NONE | wxTE_PROCESS_ENTER, wxTextValidator(wxFILTER_DIGITS));
     text_ctrl->SetFont(Label::Body_14);

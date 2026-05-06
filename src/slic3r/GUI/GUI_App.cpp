@@ -7,6 +7,10 @@
 #include "slic3r/GUI/UserManager.hpp"
 #include "slic3r/GUI/TaskManager.hpp"
 #include "slic3r/GUI/OpenGLManager.hpp"
+#ifdef __WXGTK__
+#include "slic3r/GUI/LinuxDisplayBackend.hpp"
+#include <wx/glcanvas.h>
+#endif
 #include "format.hpp"
 
 // Localization headers: include libslic3r version first so everything in this file
@@ -877,24 +881,6 @@ wxString file_wildcards(FileType file_type, const std::string &custom_extension)
 static std::string libslic3r_translate_callback(const char *s) { return wxGetTranslation(wxString(s, wxConvUTF8)).utf8_str().data(); }
 
 #ifdef WIN32
-#if !wxVERSION_EQUAL_OR_GREATER_THAN(3,1,3)
-static void register_win32_dpi_event()
-{
-    enum { WM_DPICHANGED_ = 0x02e0 };
-
-    wxWindow::MSWRegisterMessageHandler(WM_DPICHANGED_, [](wxWindow *win, WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam) {
-        const int dpi = wParam & 0xffff;
-        const auto rect = reinterpret_cast<PRECT>(lParam);
-        const wxRect wxrect(wxPoint(rect->top, rect->left), wxPoint(rect->bottom, rect->right));
-
-        DpiChangedEvent evt(EVT_DPI_CHANGED_SLICER, dpi, wxrect);
-        win->GetEventHandler()->AddPendingEvent(evt);
-
-        return true;
-    });
-}
-#endif // !wxVERSION_EQUAL_OR_GREATER_THAN
-
 static GUID GUID_DEVINTERFACE_HID = { 0x4D1E55B2, 0xF16F, 0x11CF, 0x88, 0xCB, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30 };
 
 static void register_win32_device_notification_event()
@@ -1224,6 +1210,8 @@ void GUI_App::post_init()
         }
         else {
             BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << "Found glcontext not ready, postpone the init";
+            plater_->canvas3D()->enable_render(true);
+            plater_->canvas3D()->set_as_dirty();
         }
 //#endif
         if (is_editor())
@@ -2365,7 +2353,8 @@ bool GUI_App::init_opengl()
     }
 #ifdef __linux__
     bool status = p_ogl_mananager->init_gl();
-    m_opengl_initialized = true;
+    if (status)
+        m_opengl_initialized = true;
     return status;
 #else
     return p_ogl_mananager->init_gl();
@@ -3263,14 +3252,25 @@ bool GUI_App::on_init_inner()
     //}
 
 #ifdef WIN32
-#if !wxVERSION_EQUAL_OR_GREATER_THAN(3,1,3)
-    register_win32_dpi_event();
-#endif // !wxVERSION_EQUAL_OR_GREATER_THAN
     register_win32_device_notification_event();
 #endif // WIN32
 
     // Let the libslic3r know the callback, which will translate messages on demand.
     Slic3r::I18N::set_translate_callback(libslic3r_translate_callback);
+
+#if defined(__WXGTK__) && wxHAS_EGL
+    // Configure GL backend before any wxGLCanvas is created.
+    // On X11, prefer GLX for maximum driver compatibility.
+    // On Wayland, EGL is used by default (only option).
+    if (Slic3r::GUI::is_running_on_x11()) {
+        wxGLCanvas::PreferGLX();
+        BOOST_LOG_TRIVIAL(info) << "X11 detected, using GLX for OpenGL context";
+    } else if (Slic3r::GUI::is_running_on_wayland()) {
+        BOOST_LOG_TRIVIAL(info) << "Wayland detected, using EGL for OpenGL context";
+    } else {
+        BOOST_LOG_TRIVIAL(warning) << "Unknown display backend, defaulting to EGL";
+    }
+#endif
 
     // Initialize Filament Manager store & sync
     if (!m_fila_manager_store) {
@@ -4304,8 +4304,10 @@ void GUI_App::force_colors_update()
 #ifdef _MSW_DARK_MODE
 #ifdef __WINDOWS__
     NppDarkMode::SetDarkMode(dark_mode());
+#if wxVERSION_NUMBER < 3300
     if (WXHWND wxHWND = wxToolTip::GetToolTipCtrl())
         NppDarkMode::SetDarkExplorerTheme((HWND)wxHWND);
+#endif
     NppDarkMode::SetDarkTitleBar(mainframe->GetHWND());
 
 
@@ -7824,7 +7826,11 @@ bool GUI_App::window_pos_restore(wxTopLevelWindow* window, const std::string &na
     }
 
     const wxRect& rect = metrics->get_rect();
-    window->SetPosition(rect.GetPosition());
+#if defined(__WXGTK__)
+    // On Wayland, SetPosition() is a no-op for top-level windows.
+    if (!Slic3r::GUI::is_running_on_wayland())
+#endif
+        window->SetPosition(rect.GetPosition());
     window->SetSize(rect.GetSize());
     window->Maximize(metrics->get_maximized());
     return true;

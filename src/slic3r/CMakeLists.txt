@@ -218,6 +218,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/GUI_Utils.hpp
     GUI/I18N.cpp
     GUI/I18N.hpp
+    GUI/LinuxDisplayBackend.cpp
+    GUI/LinuxDisplayBackend.hpp
     GUI/IconManager.cpp
     GUI/IconManager.hpp
     GUI/MainFrame.cpp
@@ -760,6 +762,16 @@ if (UNIX AND NOT APPLE)
     pkg_check_modules(GST_BASE REQUIRED gstreamer-base-1.0)
     target_link_libraries(libslic3r_gui ${GSTREAMER_LIBRARIES} ${GST_BASE_LIBRARIES})
     target_include_directories(libslic3r_gui PRIVATE ${GSTREAMER_INCLUDE_DIRS} ${GST_BASE_INCLUDE_DIRS})
+
+    # Propagate GDK backend detection results (set in cmake/modules/FindGTK3.cmake)
+    # as compile definitions so LinuxDisplayBackend.cpp can include the right
+    # GDK headers.
+    if (wxHAVE_GDK_X11)
+        target_compile_definitions(libslic3r_gui PRIVATE wxHAVE_GDK_X11)
+    endif ()
+    if (wxHAVE_GDK_WAYLAND)
+        target_compile_definitions(libslic3r_gui PRIVATE wxHAVE_GDK_WAYLAND)
+    endif ()
 endif ()
 
 # Add a definition so that we can tell we are compiling slic3r.

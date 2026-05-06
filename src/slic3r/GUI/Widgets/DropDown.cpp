@@ -57,7 +57,7 @@ void DropDown::Create(wxWindow *parent, long style)
     PopupWindow::Create(parent, wxPU_CONTAINS_CONTROLS);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(*wxWHITE);
-    state_handler.attach({&border_color, &text_color, &selector_border_color, &selector_background_color});
+    state_handler.attach(std::vector<StateColor const*>{&border_color, &text_color, &selector_border_color, &selector_background_color});
     state_handler.update_binds();
     if ((style & DD_NO_CHECK_ICON) == 0)
         check_bitmap = ScalableBitmap(this, "checked", 16);

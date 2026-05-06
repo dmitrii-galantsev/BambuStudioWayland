@@ -84,7 +84,7 @@ void TempInput::Create(wxWindow *parent, wxString text, wxString label, wxString
     StaticBox::Create(parent, wxID_ANY, pos, size, style);
     wxWindow::SetLabel(label);
     style &= ~wxALIGN_CENTER_HORIZONTAL;
-    state_handler.attach({&label_color, &text_color});
+    state_handler.attach(std::vector<StateColor const*>{&label_color, &text_color});
     state_handler.update_binds();
     text_ctrl = new wxTextCtrl(this, wxID_ANY, text, {5, 5}, wxDefaultSize, wxTE_PROCESS_ENTER | wxBORDER_NONE, wxTextValidator(wxFILTER_NUMERIC), wxTextCtrlNameStr);
     text_ctrl->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));

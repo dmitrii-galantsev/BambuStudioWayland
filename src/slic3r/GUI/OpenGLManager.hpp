@@ -194,16 +194,6 @@ public:
         uint32_t m_height{ 0u };
     };
 
-#ifdef __APPLE__
-    // Part of hack to remove crash when closing the application on OSX 10.9.5 when building against newer wxWidgets
-    struct OSInfo
-    {
-        int major{ 0 };
-        int minor{ 0 };
-        int micro{ 0 };
-    };
-#endif //__APPLE__
-
 private:
     enum class EMultisampleState : unsigned char
     {
@@ -230,10 +220,6 @@ private:
     bool m_b_advanced_gcode_viewer_enabled{ true };
     uint8_t m_toolbar_rendering_style{ 0 };
     static GLInfo s_gl_info;
-#ifdef __APPLE__
-    // Part of hack to remove crash when closing the application on OSX 10.9.5 when building against newer wxWidgets
-    static OSInfo s_os_info;
-#endif //__APPLE__
     static bool s_b_initialized;
     static bool s_compressed_textures_supported;
     static EMultisampleState s_multisample;

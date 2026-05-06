@@ -18,11 +18,15 @@
 #include <wx/msgdlg.h>
 
 #ifdef __APPLE__
-// Part of hack to remove crash when closing the application on OSX 10.9.5 when building against newer wxWidgets
-#include <wx/platinfo.h>
-
 #include "../Utils/MacDarkMode.hpp"
 #endif // __APPLE__
+
+#ifdef __WXGTK__
+#include "LinuxDisplayBackend.hpp"
+#ifdef wxHAS_EGL
+#include <EGL/egl.h>
+#endif
+#endif
 
 #define BBS_GL_EXTENSION_FUNC(_func) (OpenGLManager::get_framebuffers_type() == OpenGLManager::EFramebufferType::Ext ? _func ## EXT : _func)
 #define BBS_GL_EXTENSION_PARAMETER(_param) OpenGLManager::get_framebuffers_type() == OpenGLManager::EFramebufferType::Ext ? _param ## _EXT : _param
@@ -317,10 +321,6 @@ OpenGLManager::EFramebufferType OpenGLManager::s_framebuffers_type = OpenGLManag
 bool OpenGLManager::s_b_initialized = false;
 ColorRGBA OpenGLManager::s_cut_plane_color = {1.0f, 0.37f, 0.0f, 1.0f};
 bool      OpenGLManager::s_cancle_glmultidraw             = false;
-#ifdef __APPLE__
-// Part of hack to remove crash when closing the application on OSX 10.9.5 when building against newer wxWidgets
-OpenGLManager::OSInfo OpenGLManager::s_os_info;
-#endif // __APPLE__
 
 OpenGLManager::OpenGLManager()
 {
@@ -333,17 +333,8 @@ OpenGLManager::~OpenGLManager()
     m_shaders_manager.shutdown();
     m_name_to_framebuffer.clear();
 
-#ifdef __APPLE__
-    // This is an ugly hack needed to solve the crash happening when closing the application on OSX 10.9.5 with newer wxWidgets
-    // The crash is triggered inside wxGLContext destructor
-    if (s_os_info.major != 10 || s_os_info.minor != 9 || s_os_info.micro != 5)
-    {
-#endif //__APPLE__
-        if (m_context != nullptr)
-            delete m_context;
-#ifdef __APPLE__
-    }
-#endif //__APPLE__
+    if (m_context != nullptr)
+        delete m_context;
 }
 
 bool OpenGLManager::init()
@@ -464,13 +455,6 @@ wxGLContext* OpenGLManager::init_glcontext(wxGLCanvas& canvas)
 {
     if (m_context == nullptr) {
         m_context = new wxGLContext(&canvas);
-
-#ifdef __APPLE__
-        // Part of hack to remove crash when closing the application on OSX 10.9.5 when building against newer wxWidgets
-        s_os_info.major = wxPlatformInfo::Get().GetOSMajorVersion();
-        s_os_info.minor = wxPlatformInfo::Get().GetOSMinorVersion();
-        s_os_info.micro = wxPlatformInfo::Get().GetOSMicroVersion();
-#endif //__APPLE__
     }
     return m_context;
 }
@@ -861,7 +845,10 @@ wxGLCanvas* OpenGLManager::create_wxglcanvas(wxWindow& parent, EMSAAType msaa_ty
     if (! can_multisample())
         attribList[12] = 0;
 
-    return new wxGLCanvas(&parent, wxID_ANY, attribList, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
+    wxGLCanvas* canvas = new wxGLCanvas(&parent, wxID_ANY, attribList, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
+    // The GL canvas paints its entire surface, so background erasing is unnecessary.
+    canvas->SetBackgroundStyle(wxBG_STYLE_PAINT);
+    return canvas;
 }
 
 void OpenGLManager::set_cut_plane_color(ColorRGBA color) {
@@ -1038,6 +1025,18 @@ void OpenGLManager::detect_multisample(int* attribList)
 {
     int wxVersion = wxMAJOR_VERSION * 10000 + wxMINOR_VERSION * 100 + wxRELEASE_NUMBER;
     bool enable_multisample = wxVersion >= 30003;
+#if defined(__WXGTK__)
+    // On Wayland, wxGLCanvas::IsDisplaySupported() requires the EGL backend.
+    // If wxWidgets was built without EGL, the GLX backend will crash trying
+    // to access a non-existent X11 display. Disable multisample in that case.
+    if (Slic3r::GUI::is_running_on_wayland()) {
+#if !defined(wxHAS_EGL) || !wxHAS_EGL
+        BOOST_LOG_TRIVIAL(warning) << "Wayland without EGL: disabling multisample detection";
+        s_multisample = EMultisampleState::Disabled;
+        return;
+#endif
+    }
+#endif
     s_multisample =
         enable_multisample &&
         // Disable multi-sampling on ChromeOS, as the OpenGL virtualization swaps Red/Blue channels with multi-sampling enabled,

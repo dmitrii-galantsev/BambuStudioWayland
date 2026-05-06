@@ -937,7 +937,7 @@ int MultiSwitchButton::AppendOption(const wxString &option, void *clientData)
     btns.push_back(btn);
 
     if (btns.size() > 1) { sizer->AddSpacer(0); }
-    sizer->Add(btn, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL);
+    sizer->Add(btn, 1, wxEXPAND);
     wxSize textSize = btn->GetTextExtent(option);
     wxSize minSize  = wxSize(textSize.x + m_button_padding.x * 2 + 6, -1);
     btn->SetMinSize(minSize);

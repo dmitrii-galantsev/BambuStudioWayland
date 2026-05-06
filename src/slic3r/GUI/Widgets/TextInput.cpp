@@ -65,7 +65,7 @@ void TextInput::Create(wxWindow *     parent,
     wxWindow::SetLabel(label);
     assert((style & wxRIGHT) == 0);
     style &= ~wxALIGN_MASK;
-    state_handler.attach({&label_color, & text_color});
+    state_handler.attach(std::vector<StateColor const*>{&label_color, & text_color});
     state_handler.update_binds();
     
     int prefix_space = 0;

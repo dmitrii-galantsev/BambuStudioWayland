@@ -855,7 +855,7 @@ void AMSControl::show_switcher_status(bool show)
         tipText->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
         tipText->Wrap(-1);
         tipText->SetMinSize(wxSize(-1, -1));
-        tipSizer->Add(tipText, 0, wxALL | wxALIGN_CENTER_VERTICAL | wxEXPAND, FromDIP(8));
+        tipSizer->Add(tipText, 0, wxALL | wxEXPAND, FromDIP(8));
         m_sizer_body->Add(tipPanel, 1, wxEXPAND, 0);
     }
     if (tipPanel->IsShown() == show)
