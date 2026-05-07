@@ -7,6 +7,9 @@
 #include <wx/dcclient.h>
 #include <wx/dcgraph.h>
 #include "../MsgDialog.hpp"
+#ifdef __WXGTK3__
+#include "../GUI_Utils.hpp"
+#endif
 
 BEGIN_EVENT_TABLE(TextInput, wxPanel)
 
@@ -76,6 +79,9 @@ void TextInput::Create(wxWindow *     parent,
     }
 
     text_ctrl = new TextCtrl(this, wxID_ANY, text, {4 + prefix_space, 4}, wxDefaultSize, style | wxBORDER_NONE | wxTE_PROCESS_ENTER);
+#ifdef __WXGTK3__
+    Slic3r::GUI::RemoveButtonBorder(text_ctrl);
+#endif
     text_ctrl->SetFont(Label::Body_14);
     text_ctrl->SetInitialSize(text_ctrl->GetBestSize());
     text_ctrl->SetBackgroundColour(background_color.colorForStates(state_handler.states()));

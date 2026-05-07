@@ -608,7 +608,7 @@ void RemoveButtonBorder(wxWindow* win)
 
     GtkCssProvider* provider = gtk_css_provider_new();
     const char* css =
-        "button {"
+        "button, entry, spinbutton, spinbutton entry {"
         "  border: none;"
         "  outline: none;"
         "  box-shadow: none;"

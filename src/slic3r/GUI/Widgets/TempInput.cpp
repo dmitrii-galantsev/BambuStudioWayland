@@ -5,6 +5,9 @@
 #include <wx/dcgraph.h>
 #include "../GUI.hpp"
 #include "../GUI_App.hpp"
+#ifdef __WXGTK3__
+#include "../GUI_Utils.hpp"
+#endif
 
 wxDEFINE_EVENT(wxCUSTOMEVT_SET_TEMP_FINISH, wxCommandEvent);
 
@@ -87,6 +90,9 @@ void TempInput::Create(wxWindow *parent, wxString text, wxString label, wxString
     state_handler.attach(std::vector<StateColor const*>{&label_color, &text_color});
     state_handler.update_binds();
     text_ctrl = new wxTextCtrl(this, wxID_ANY, text, {5, 5}, wxDefaultSize, wxTE_PROCESS_ENTER | wxBORDER_NONE, wxTextValidator(wxFILTER_NUMERIC), wxTextCtrlNameStr);
+#ifdef __WXGTK3__
+    Slic3r::GUI::RemoveButtonBorder(text_ctrl);
+#endif
     text_ctrl->SetBackgroundColour(StateColor::darkModeColorFor(*wxWHITE));
     text_ctrl->SetMaxLength(3);
     state_handler.attach_child(text_ctrl);
