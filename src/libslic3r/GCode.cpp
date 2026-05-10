@@ -2797,8 +2797,11 @@ void GCode::_do_export(Print& print, GCodeOutputStream &file, ThumbnailsGenerato
 */
     this->_print_first_layer_extruder_temperatures(file, print, machine_start_gcode, initial_extruder_id, true);
 
-    if (m_config.support_air_filtration.getBool() && m_config.activate_air_filtration.get_at(initial_extruder_id)) {
-        file.write(m_writer.set_exhaust_fan(m_config.during_print_exhaust_fan_speed.get_at(initial_extruder_id), true));
+    {
+        bool h2c_force_air_filt = m_config.printer_model.value.find("H2C") != std::string::npos;
+        if ((m_config.support_air_filtration.getBool() || h2c_force_air_filt) && m_config.activate_air_filtration.get_at(initial_extruder_id)) {
+            file.write(m_writer.set_exhaust_fan(m_config.during_print_exhaust_fan_speed.get_at(initial_extruder_id), true));
+        }
     }
 
     print.throw_if_canceled();
@@ -3177,7 +3180,10 @@ void GCode::_do_export(Print& print, GCodeOutputStream &file, ThumbnailsGenerato
     bool activate_air_filtration = false;
     for (const auto& extruder : m_writer.extruders())
         activate_air_filtration |= m_config.activate_air_filtration.get_at(extruder.id());
-    activate_air_filtration &= m_config.support_air_filtration.getBool();
+    {
+        bool h2c_force_air_filt = m_config.printer_model.value.find("H2C") != std::string::npos;
+        activate_air_filtration &= (m_config.support_air_filtration.getBool() || h2c_force_air_filt);
+    }
 
     if (activate_air_filtration) {
         int complete_print_exhaust_fan_speed = 0;
