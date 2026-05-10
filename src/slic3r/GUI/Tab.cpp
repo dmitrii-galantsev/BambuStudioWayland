@@ -4648,6 +4648,10 @@ void TabFilament::toggle_options()
             toggle_option(el, has_enable_overhang_bridge_fan);
 
         bool support_air_filtration = m_preset_bundle->printers.get_edited_preset().config.opt_bool("support_air_filtration");
+        {
+            std::string printer_model = m_preset_bundle->printers.get_edited_preset().config.opt_string("printer_model");
+            if (printer_model.find("H2C") != std::string::npos) support_air_filtration = true;
+        }
         toggle_line("activate_air_filtration",is_BBL_printer && support_air_filtration);
 
         for (auto elem : { "during_print_exhaust_fan_speed","complete_print_exhaust_fan_speed" })
@@ -5678,7 +5682,11 @@ void TabPrinter::toggle_options()
         toggle_option("use_relative_e_distances", !is_BBL_printer);
         toggle_option("support_chamber_temp_control",!is_BBL_printer);
         toggle_option("use_firmware_retraction", !is_BBL_printer);
-        toggle_line("support_air_filtration", !m_config->opt_bool("support_cooling_filter") && is_BBL_printer);
+        {
+            std::string printer_model = m_config->opt_string("printer_model");
+            bool is_h2c = printer_model.find("H2C") != std::string::npos;
+            toggle_line("support_air_filtration", (is_h2c || !m_config->opt_bool("support_cooling_filter")) && is_BBL_printer);
+        }
         toggle_line("cooling_filter_enabled", m_config->opt_bool("support_cooling_filter") && is_BBL_printer);
         toggle_option("print_in_clockwise", !is_BBL_printer);
         auto flavor = m_config->option<ConfigOptionEnum<GCodeFlavor>>("gcode_flavor")->value;
