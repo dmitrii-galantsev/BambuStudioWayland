@@ -601,7 +601,7 @@ StringObjectException Print::sequential_print_clearance_valid(const Print &print
         }
     }
 
-    std::map<ObjectID, Polygon> map_model_object_to_convex_hull;
+    // ORCA: compute the convex hull per PrintInstance so different scale/rotation/mirror across instances are reflected correctly.
     struct print_instance_info
     {
         const PrintInstance *print_instance;
@@ -636,28 +636,13 @@ StringObjectException Print::sequential_print_clearance_valid(const Print &print
         for (const PrintObject *print_object : print.objects()) {
             assert(! print_object->model_object()->instances.empty());
             assert(! print_object->instances().empty());
-            ObjectID model_object_id = print_object->model_object()->id();
-            auto it_convex_hull = map_model_object_to_convex_hull.find(model_object_id);
-            // Get convex hull of all printable volumes assigned to this print object.
-            ModelInstance *model_instance0 = print_object->model_object()->instances.front();
-            if (it_convex_hull == map_model_object_to_convex_hull.end()) {
-                // Calculate the convex hull of a printable object.
-                // Grow convex hull with the clearance margin.
-                // FIXME: Arrangement has different parameters for offsetting (jtMiter, limit 2)
-                // which causes that the warning will be showed after arrangement with the
-                // appropriate object distance. Even if I set this to jtMiter the warning still shows up.
-                Geometry::Transformation new_trans(model_instance0->get_transformation());
-                new_trans.set_offset({0.0, 0.0, model_instance0->get_offset().z()});
-                it_convex_hull = map_model_object_to_convex_hull.emplace_hint(it_convex_hull, model_object_id,
-                            print_object->model_object()->convex_hull_2d(new_trans.get_matrix()));
-            }
-            // Make a copy, so it may be rotated for instances.
-            Polygon convex_hull0 = it_convex_hull->second;
-            const double z_diff = Geometry::rotation_diff_z(model_instance0->get_rotation(), print_object->instances().front().model_instance->get_rotation());
-            if (std::abs(z_diff) > EPSILON)
-                convex_hull0.rotate(z_diff);
+            // ORCA: recompute the convex hull for each PrintInstance individually so scaling/mirroring/rotation
+            // differences between instances of the same ModelObject are not lost to a per-object cache.
             // Now we check that no instance of convex_hull intersects any of the previously checked object instances.
             for (const PrintInstance &instance : print_object->instances()) {
+                Geometry::Transformation inst_trans(instance.model_instance->get_transformation());
+                inst_trans.set_offset({0.0, 0.0, instance.model_instance->get_offset().z()});
+                Polygon convex_hull0 = print_object->model_object()->convex_hull_2d(inst_trans.get_matrix());
                 Polygon convex_hull_no_offset = convex_hull0, convex_hull;
                 auto tmp = offset(convex_hull_no_offset, obj_distance, jtRound, scale_(0.1));
                 if (!tmp.empty()) { // tmp may be empty due to clipper's bug, see STUDIO-2452
@@ -951,33 +936,44 @@ static StringObjectException layered_print_cleareance_valid(const Print &print, 
         wrapping_poly.points.emplace_back(scale_(pt.x() + print_origin.x()), scale_(pt.y() + print_origin.y()));
     }
 
-    std::map<const ModelVolume*, Polygon> map_model_volume_to_convex_hull;
+    // ORCA: compute the convex hull per PrintInstance (not cached per ModelVolume) and add the previously missing
+    // inter-instance collision warning so two instances of the same object can be reported when they overlap.
     Polygons convex_hulls_other;
     for (auto& inst : print_instances_ordered) {
+        Polygons current_instance_hulls;
         for (const ModelVolume *v : inst->print_object->model_object()->volumes) {
             if (!v->is_model_part()) continue;
-            auto it_convex_hull = map_model_volume_to_convex_hull.find(v);
-            if (it_convex_hull == map_model_volume_to_convex_hull.end()) {
-                auto volume_hull = v->get_convex_hull_2d(Geometry::assemble_transform(Vec3d::Zero(), inst->model_instance->get_rotation(),
-                                                                                      inst->model_instance->get_scaling_factor(), inst->model_instance->get_mirror()));
-                volume_hull.translate(inst->shift - inst->print_object->center_offset());
 
-                it_convex_hull = map_model_volume_to_convex_hull.emplace_hint(it_convex_hull, v, volume_hull);
-            }
-            Polygon &convex_hull = it_convex_hull->second;
-            Polygons convex_hulls_temp;
-            convex_hulls_temp.push_back(convex_hull);
-            if (!intersection(exclude_polys, convex_hull).empty()) {
+            auto volume_hull = v->get_convex_hull_2d(Geometry::assemble_transform(Vec3d::Zero(), inst->model_instance->get_rotation(),
+                                                                                  inst->model_instance->get_scaling_factor(), inst->model_instance->get_mirror()));
+            volume_hull.translate(inst->shift - inst->print_object->center_offset());
+
+            if (!intersection(exclude_polys, volume_hull).empty()) {
                 return {inst->model_instance->get_object()->name + L(" is too close to exclusion area, there may be collisions when printing.") + "\n",
                         inst->model_instance->get_object()};
             }
 
-            if (print_config.enable_wrapping_detection.value && !intersection(wrapping_poly, convex_hull).empty()) {
+            if (print_config.enable_wrapping_detection.value && !intersection(wrapping_poly, volume_hull).empty()) {
                 return {inst->model_instance->get_object()->name + L(" is too close to clumping detection area, there may be collisions when printing.") + "\n",
                         inst->model_instance->get_object()};
             }
-            convex_hulls_other.emplace_back(convex_hull);
+            current_instance_hulls.emplace_back(volume_hull);
         }
+
+        if (!intersection(convex_hulls_other, current_instance_hulls).empty()) {
+            if (warning) {
+                if (warning->string.empty()) {
+                    warning->string = (boost::format(L("%1% is too close to others, and collisions may be caused.")) % inst->model_instance->get_object()->name).str();
+                    warning->object = inst->model_instance->get_object();
+                } else {
+                    warning->string += "\n" + (boost::format(L("%1% is too close to others, and collisions may be caused.")) % inst->model_instance->get_object()->name).str();
+                    if (!warning->object) warning->object = inst->model_instance->get_object();
+                }
+                warning->is_warning = true;
+                warning->type = STRING_EXCEPT_OBJECT_COLLISION_IN_LAYER_PRINT;
+            }
+        }
+        append(convex_hulls_other, current_instance_hulls);
     }
 
     //BBS: add the wipe tower check logic
@@ -1315,7 +1311,8 @@ StringObjectException Print::validate(StringObjectException *warning, Polygons* 
         }
     }
 
-    if (m_config.print_sequence == PrintSequence::ByObject && m_objects.size() > 1) {
+    // ORCA: also validate when a single object has multiple instances (otherwise the timelapse/by-object checks are silently skipped).
+    if (m_config.print_sequence == PrintSequence::ByObject && (m_objects.size() > 1 || (!m_objects.empty() && m_objects[0]->instances().size() > 1))) {
         if (m_config.timelapse_type == TimelapseType::tlSmooth)
             return {L("Smooth mode of timelapse is not supported when \"by object\" sequence is enabled.")};
 
