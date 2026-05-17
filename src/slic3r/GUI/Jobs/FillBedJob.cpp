@@ -64,7 +64,7 @@ void FillBedJob::prepare()
 
             ArrangePolygon ap = get_instance_arrange_poly(mo->instances[inst_idx], global_config);
             BoundingBox ap_bb = ap.transformed_poly().contour.bounding_box();
-            ap.height = 1;
+            // ORCA: keep the real object height so print-by-object clearance is respected when filling the bed.
             ap.name = mo->name;
 
             // overlap 判定，避免姿态导致 AABB 略超盘边的对象被错划入 m_locked。
@@ -164,7 +164,7 @@ void FillBedJob::prepare()
         ArrangePolygon ap = template_ap;
         ap.poly = m_selected.front().poly;
         ap.bed_idx = PartPlateList::MAX_PLATES_COUNT;
-        ap.height = 1;
+        // ORCA: keep the real object height so print-by-object clearance is respected when filling the bed.
         ap.itemid = -1;
         ap.setter = [this, mi_orig_trafo](const ArrangePolygon &p) {
             ModelObject *mo = m_plater->model().objects[m_object_idx];
