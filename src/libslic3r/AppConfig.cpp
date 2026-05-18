@@ -615,10 +615,16 @@ std::string AppConfig::load()
             j = json::parse(left_string);
         }
 #else
+        // Treat an empty config file as "no config" instead of letting nlohmann throw —
+        // an exception escaping here propagates out of GUI_App::init_app_config and into
+        // wxMessageBox before wxApp is initialised, which then SEGVs in ~wxTopLevelWindowGTK.
+        // Empty files are produced by Syncthing conflict resolution and similar tooling.
+        if (ifs.peek() == std::char_traits<char>::eof())
+            return {};
         ifs >> j;
 #endif
     }
-    catch(nlohmann::detail::parse_error &err) {
+    catch(std::exception &err) {
 #ifdef WIN32
         // The configuration file is corrupted, try replacing it with the backup configuration.
         ifs.close();
