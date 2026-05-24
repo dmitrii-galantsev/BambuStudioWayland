@@ -412,6 +412,23 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
 
     Bind(EVT_SYNC_CLOUD_PRESET, &MainFrame::on_select_default_preset, this);
 
+    // Wire DiffPresetDialog "Transfer values from left to right" -> Tab::transfer_options
+    diff_dialog.Bind(EVT_DIFF_DIALOG_TRANSFER, [this](SimpleEvent&) {
+        auto transfer_one = [this](Preset::Type type) {
+            Tab* tab = wxGetApp().get_tab(type);
+            if (!tab) return;
+            tab->transfer_options(diff_dialog.get_left_preset_name(type),
+                                  diff_dialog.get_right_preset_name(type),
+                                  diff_dialog.get_selected_options(type));
+        };
+        const Preset::Type dlg_type = diff_dialog.view_type();
+        if (dlg_type == Preset::TYPE_INVALID)
+            for (const Preset::Type& t : diff_dialog.types_list())
+                transfer_one(t);
+        else
+            transfer_one(dlg_type);
+    });
+
 //    Bind(wxEVT_MENU,
 //        [this](wxCommandEvent&)
 //        {
