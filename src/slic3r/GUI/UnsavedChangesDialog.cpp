@@ -42,6 +42,8 @@ namespace Slic3r {
 
 namespace GUI {
 
+wxDEFINE_EVENT(EVT_DIFF_DIALOG_TRANSFER, SimpleEvent);
+
 // ----------------------------------------------------------------------------
 //                  ModelNode: a node inside DiffModel
 // ----------------------------------------------------------------------------
@@ -2035,10 +2037,40 @@ DiffPresetDialog::DiffPresetDialog(MainFrame* mainframe)
     });
 
     m_tree = new DiffViewCtrl(this, wxSize(em * 65, em * 40));
+    m_tree->AppendToggleColumn_(L"✔",               DiffModel::colToggle,   wxLinux ? 9 : 6);
     m_tree->AppendBmpTextColumn("",                      DiffModel::colIconText, 35);
-    m_tree->AppendBmpTextColumn("Left Preset Value", DiffModel::colOldValue, 15);
-    m_tree->AppendBmpTextColumn("Right Preset Value",DiffModel::colNewValue, 15);
+    m_tree->AppendBmpTextColumn(_L("Left Preset Value"), DiffModel::colOldValue, 15);
+    m_tree->AppendBmpTextColumn(_L("Right Preset Value"),DiffModel::colNewValue, 15);
     m_tree->Hide();
+    m_tree->GetColumn(DiffModel::colToggle)->SetHidden(true);
+
+    // "Transfer values from left to right" checkbox + Transfer button
+    m_use_for_transfer = new wxCheckBox(this, wxID_ANY, _L("Transfer values from left to right"));
+    m_use_for_transfer->SetToolTip(_L("If enabled, this dialog can be used for transfer selected values from left to right preset."));
+    m_use_for_transfer->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent&) {
+        bool use = m_use_for_transfer->GetValue();
+        m_tree->GetColumn(DiffModel::colToggle)->SetHidden(!use);
+        if (m_tree->IsShown()) {
+            m_transfer_btn->Show(use);
+            Fit();
+            Refresh();
+        } else {
+            this->Layout();
+        }
+    });
+
+    m_transfer_btn = new Button(this, _L("Transfer"));
+    m_transfer_btn->Bind(wxEVT_BUTTON, [this](wxEvent&) {
+        Hide();
+        wxPostEvent(this, SimpleEvent(EVT_DIFF_DIALOG_TRANSFER));
+    });
+    m_transfer_btn->Show(false);
+
+    m_edit_sizer = new wxBoxSizer(wxHORIZONTAL);
+    m_edit_sizer->Add(m_use_for_transfer, 0, wxALIGN_CENTER_VERTICAL | wxALL, 10);
+    m_edit_sizer->AddSpacer(em * 10);
+    m_edit_sizer->Add(m_transfer_btn, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+    m_edit_sizer->Show(false);
 
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -2047,11 +2079,33 @@ DiffPresetDialog::DiffPresetDialog(MainFrame* mainframe)
     topSizer->Add(m_show_all_presets, 0, wxEXPAND | wxALL, border);
     topSizer->Add(m_bottom_info_line, 0, wxEXPAND | wxALL, 2 * border);
     topSizer->Add(m_tree, 1, wxEXPAND | wxALL, border);
+    topSizer->Add(m_edit_sizer, 0, wxEXPAND);
 
     this->SetMinSize(wxSize(80 * em, 30 * em));
     this->SetSizer(topSizer);
     topSizer->SetSizeHints(this);
     wxGetApp().UpdateDlgDarkUI(this);
+}
+
+std::array<Preset::Type, 3> DiffPresetDialog::types_list() const
+{
+    return m_pr_technology == ptSLA
+               ? std::array<Preset::Type, 3>{Preset::TYPE_SLA_PRINT, Preset::TYPE_SLA_MATERIAL, Preset::TYPE_PRINTER}
+               : std::array<Preset::Type, 3>{Preset::TYPE_PRINT,     Preset::TYPE_FILAMENT,     Preset::TYPE_PRINTER};
+}
+
+std::string DiffPresetDialog::get_left_preset_name(Preset::Type type)
+{
+    auto it = std::find_if(m_preset_combos.begin(), m_preset_combos.end(),
+                           [type](const DiffPresets& p) { return p.presets_left->get_type() == type; });
+    return it == m_preset_combos.end() ? std::string() : Preset::remove_suffix_modified(get_selection(it->presets_left));
+}
+
+std::string DiffPresetDialog::get_right_preset_name(Preset::Type type)
+{
+    auto it = std::find_if(m_preset_combos.begin(), m_preset_combos.end(),
+                           [type](const DiffPresets& p) { return p.presets_right->get_type() == type; });
+    return it == m_preset_combos.end() ? std::string() : Preset::remove_suffix_modified(get_selection(it->presets_right));
 }
 
 void DiffPresetDialog::update_controls_visibility(Preset::Type type /* = Preset::TYPE_INVALID*/)
@@ -2222,6 +2276,11 @@ void DiffPresetDialog::update_tree()
     if (!show_tree)
         m_bottom_info_line->SetLabel(bottom_info);
     m_bottom_info_line->Show(!show_tree);
+
+    bool can_transfer_options = show_tree && (m_view_type == Preset::TYPE_INVALID ||
+                                              get_left_preset_name(m_view_type) != get_right_preset_name(m_view_type));
+    m_edit_sizer->Show(can_transfer_options);
+    m_transfer_btn->Show(can_transfer_options && m_use_for_transfer->GetValue());
 
     if (tree_was_shown == m_tree->IsShown())
         Layout();
