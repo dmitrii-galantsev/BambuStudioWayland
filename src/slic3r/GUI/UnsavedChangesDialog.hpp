@@ -10,12 +10,15 @@
 #include "libslic3r/PresetBundle.hpp"
 #include "Widgets/Button.hpp"
 #include "Widgets/ScrolledWindow.hpp"
+#include "Event.hpp"
 
 class ScalableButton;
 class wxStaticText;
 
 namespace Slic3r {
 namespace GUI{
+
+wxDECLARE_EVENT(EVT_DIFF_DIALOG_TRANSFER, SimpleEvent);
 
 // ----------------------------------------------------------------------------
 //                  ModelNode: a node inside DiffModel
@@ -424,6 +427,9 @@ class DiffPresetDialog : public DPIDialog
     wxStaticText*           m_top_info_line     { nullptr };
     wxStaticText*           m_bottom_info_line  { nullptr };
     wxCheckBox*             m_show_all_presets  { nullptr };
+    wxCheckBox*             m_use_for_transfer  { nullptr };
+    Button*                 m_transfer_btn      { nullptr };
+    wxBoxSizer*             m_edit_sizer        { nullptr };
 
     Preset::Type            m_view_type         { Preset::TYPE_INVALID };
     PrinterTechnology       m_pr_technology;
@@ -450,6 +456,14 @@ public:
 
     void                    show(Preset::Type type = Preset::TYPE_INVALID);
     void                    update_presets(Preset::Type type = Preset::TYPE_INVALID);
+
+    Preset::Type            view_type() const           { return m_view_type; }
+    PrinterTechnology       printer_technology() const  { return m_pr_technology; }
+
+    std::string                 get_left_preset_name(Preset::Type type);
+    std::string                 get_right_preset_name(Preset::Type type);
+    std::vector<std::string>    get_selected_options(Preset::Type type) const { return m_tree->options(type, true); }
+    std::array<Preset::Type, 3> types_list() const;
 
 protected:
     void on_dpi_changed(const wxRect& suggested_rect) override;
