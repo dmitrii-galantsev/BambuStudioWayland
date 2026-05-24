@@ -2585,6 +2585,41 @@ void Tab::cache_config_diff(const std::vector<std::string>& selected_options)
     m_cache_config.apply_only(m_presets->get_edited_preset().config, selected_options);
 }
 
+void Tab::transfer_options(const std::string& name_from, const std::string& name_to, std::vector<std::string> options)
+{
+    if (options.empty())
+        return;
+
+    Preset* preset_from = m_presets->find_preset(name_from);
+    Preset* preset_to   = m_presets->find_preset(name_to);
+    if (!preset_from || !preset_to)
+        return;
+
+    if (m_type == Preset::TYPE_PRINTER) {
+        auto it = std::find(options.begin(), options.end(), "extruders_count");
+        if (it != options.end()) {
+            options.erase(it);
+            // cache extruder count from the source (left) preset
+            auto* tab_printer = static_cast<TabPrinter*>(this);
+            auto* edited_ptr  = &m_presets->get_edited_preset();
+            Preset saved = *edited_ptr;
+            *edited_ptr = *preset_from;
+            tab_printer->cache_extruder_cnt();
+            *edited_ptr = std::move(saved);
+        }
+    }
+
+    // cache the selected options sourced from preset_from
+    m_cache_options = options;
+    m_cache_config.apply_only(preset_from->config, options);
+
+    if (name_to != m_presets->get_edited_preset().name)
+        select_preset(preset_to->name);
+
+    apply_config_from_cache();
+    load_current_preset();
+}
+
 // Variants related options need special handling when transfering to another printer
 // If m_cache_options ends with the variant trailer (title, variants_key) pushed by
 // handle_transfer_action, we'll do our work here, otherwise we dont touch it
