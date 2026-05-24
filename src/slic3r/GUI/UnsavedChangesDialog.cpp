@@ -1976,9 +1976,11 @@ DiffPresetDialog::DiffPresetDialog(MainFrame* mainframe)
     //m_top_info_line = new wxStaticText(this, wxID_ANY, "Select presets to compare");
     m_top_info_line = new wxStaticText(this, wxID_ANY, _L("Select presets to compare"));
     m_top_info_line->SetFont(wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT).Bold());
+    m_top_info_line->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#323A3D")));
 
     m_bottom_info_line = new wxStaticText(this, wxID_ANY, "");
     m_bottom_info_line->SetFont(wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT).Bold());
+    m_bottom_info_line->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#323A3D")));
 
     wxBoxSizer* presets_sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -2024,6 +2026,7 @@ DiffPresetDialog::DiffPresetDialog(MainFrame* mainframe)
     }
 
     m_show_all_presets = new wxCheckBox(this, wxID_ANY, _L("Show all presets (including incompatible)"));
+    m_show_all_presets->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#323A3D")));
     m_show_all_presets->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent&) {
         bool show_all = m_show_all_presets->GetValue();
         for (auto preset_combos : m_preset_combos) {
@@ -2046,6 +2049,7 @@ DiffPresetDialog::DiffPresetDialog(MainFrame* mainframe)
 
     // "Transfer values from left to right" checkbox + Transfer button
     m_use_for_transfer = new wxCheckBox(this, wxID_ANY, _L("Transfer values from left to right"));
+    m_use_for_transfer->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#323A3D")));
     m_use_for_transfer->SetToolTip(_L("If enabled, this dialog can be used for transfer selected values from left to right preset."));
     m_use_for_transfer->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent&) {
         bool use = m_use_for_transfer->GetValue();
