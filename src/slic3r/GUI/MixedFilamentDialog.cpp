@@ -700,6 +700,7 @@ wxBoxSizer* MixedFilamentDialog::create_gradient_section()
 
     m_label_gradient = new wxStaticText(this, wxID_ANY, _L("Gradient Effect"));
     m_label_gradient->SetFont(::Label::Body_13);
+    m_label_gradient->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#323A3D")));
     m_gradient_sizer->Add(m_label_gradient, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
 
     m_combo_gradient_dir = new ComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition,
@@ -726,6 +727,7 @@ wxBoxSizer* MixedFilamentDialog::create_gradient_section()
 
     m_label_per_part_gradient = new wxStaticText(this, wxID_ANY, _L("Enable per-part gradient effect"));
     m_label_per_part_gradient->SetFont(::Label::Body_13);
+    m_label_per_part_gradient->SetForegroundColour(StateColor::darkModeColorFor(wxColour("#323A3D")));
     m_per_part_gradient_sizer->Add(m_label_per_part_gradient, 0,
         wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
 
