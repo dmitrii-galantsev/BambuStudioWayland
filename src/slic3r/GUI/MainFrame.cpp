@@ -649,8 +649,15 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     //FIXME it seems this method is not called on application start-up, at least not on Windows. Why?
     // The same applies to wxEVT_CREATE, it is not being called on startup on Windows.
     Bind(wxEVT_ACTIVATE, [this](wxActivateEvent& event) {
-        if (m_plater != nullptr && event.GetActive())
+        if (m_plater != nullptr && event.GetActive()) {
             m_plater->on_activate();
+            // Belt-and-suspenders printer reconnect: when the user brings BambuStudio
+            // back to the foreground (e.g. after resume-from-sleep that we may have
+            // missed via login1, or simply after switching away and back), nudge the
+            // LAN/MQTT session if it's stale. ensure_printer_reconnected() is a no-op
+            // if the selected machine is already connected.
+            wxGetApp().ensure_printer_reconnected(2000);
+        }
         event.Skip();
     });
 
