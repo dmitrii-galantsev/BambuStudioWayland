@@ -95,6 +95,10 @@
 #include "Mouse3DController.hpp"
 #include "RemovableDriveManager.hpp"
 #include "InstanceCheck.hpp"
+#if defined(__linux__) && !defined(__APPLE__)
+#include <dbus/dbus.h>
+#include <wx/timer.h>
+#endif
 #include "NotificationManager.hpp"
 #include "UnsavedChangesDialog.hpp"
 #include "SavePresetDialog.hpp"
@@ -2723,10 +2727,110 @@ void GUI_App::UnRegisterMacPowerCallBack()
 }
 #endif
 
+// Shared helper used by the Linux power callback, MainFrame activation hook, and app startup
+// path to (re-)establish the LAN/MQTT printer connection. Delayed so SSDP rediscovery and
+// network-stack recovery have a chance to complete.
+void GUI_App::ensure_printer_reconnected(int delay_ms)
+{
+    auto* timer = new wxTimer();
+    timer->Bind(wxEVT_TIMER, [this, timer](wxTimerEvent&) {
+        timer->Stop();
+        DeviceManager* dev = this->getDeviceManager();
+        if (dev) {
+            MachineObject* obj = dev->get_selected_machine();
+            std::string target = obj ? obj->get_dev_id() : dev->get_user_last_machine();
+            if (!target.empty() && !(obj && obj->is_connected())) {
+                BOOST_LOG_TRIVIAL(info) << "ensure_printer_reconnected -> set_selected_machine";
+                dev->set_selected_machine(target);
+            }
+        }
+        delete timer;
+    });
+    timer->StartOnce(delay_ms);
+}
+
+#if defined(__linux__) && !defined(__APPLE__)
+// Mirror of MacPowerCallBack: subscribe to org.freedesktop.login1.Manager.PrepareForSleep on
+// the system bus and, on wake (preparing=false), re-establish the LAN/MQTT session.
+// set_selected_machine(same_lan_dev_id) at DevManager.cpp already performs
+// disconnect_printer -> reset -> connect; ensure_printer_reconnected() schedules it with a
+// delay so SSDP has time to rediscover the printer post-resume.
+void GUI_App::RegisterLinuxPowerCallBack()
+{
+    m_linux_power_thread_stop = false;
+    m_linux_power_thread = std::thread([this]() {
+        DBusError err;
+        dbus_error_init(&err);
+        DBusConnection* conn = dbus_bus_get_private(DBUS_BUS_SYSTEM, &err);
+        if (!conn || dbus_error_is_set(&err)) {
+            BOOST_LOG_TRIVIAL(warning) << "LinuxPowerCallBack: system bus unavailable: "
+                                       << (dbus_error_is_set(&err) ? err.message : "null");
+            if (dbus_error_is_set(&err)) dbus_error_free(&err);
+            return;
+        }
+        dbus_connection_set_exit_on_disconnect(conn, FALSE);
+
+        dbus_bus_add_match(conn,
+            "type='signal',sender='org.freedesktop.login1',"
+            "interface='org.freedesktop.login1.Manager',member='PrepareForSleep'",
+            &err);
+        dbus_connection_flush(conn);
+        if (dbus_error_is_set(&err)) {
+            BOOST_LOG_TRIVIAL(warning) << "LinuxPowerCallBack: add_match failed: " << err.message;
+            dbus_error_free(&err);
+            dbus_connection_close(conn);
+            dbus_connection_unref(conn);
+            return;
+        }
+        BOOST_LOG_TRIVIAL(info) << "RegisterLinuxPowerCallBack: listening for login1 PrepareForSleep";
+
+        while (!m_linux_power_thread_stop.load()) {
+            if (!dbus_connection_read_write(conn, 500)) break;
+            DBusMessage* msg = nullptr;
+            while ((msg = dbus_connection_pop_message(conn)) != nullptr) {
+                if (dbus_message_is_signal(msg, "org.freedesktop.login1.Manager", "PrepareForSleep")) {
+                    dbus_bool_t preparing = FALSE;
+                    DBusError perr;
+                    dbus_error_init(&perr);
+                    if (dbus_message_get_args(msg, &perr, DBUS_TYPE_BOOLEAN, &preparing, DBUS_TYPE_INVALID)) {
+                        bool entering_sleep = (preparing == TRUE);
+                        CallAfter([this, entering_sleep]() {
+                            if (entering_sleep) {
+                                BOOST_LOG_TRIVIAL(info) << "LinuxPowerCallBack: PrepareForSleep=true";
+                            } else {
+                                BOOST_LOG_TRIVIAL(info) << "LinuxPowerCallBack: PrepareForSleep=false (wake)";
+                                // Give SSDP/network ~4s post-wake before retrying.
+                                ensure_printer_reconnected(4000);
+                            }
+                        });
+                    }
+                    if (dbus_error_is_set(&perr)) dbus_error_free(&perr);
+                }
+                dbus_message_unref(msg);
+            }
+        }
+
+        dbus_connection_close(conn);
+        dbus_connection_unref(conn);
+        BOOST_LOG_TRIVIAL(info) << "LinuxPowerCallBack thread exited";
+    });
+}
+
+void GUI_App::UnRegisterLinuxPowerCallBack()
+{
+    m_linux_power_thread_stop = true;
+    if (m_linux_power_thread.joinable())
+        m_linux_power_thread.join();
+}
+#endif
+
 bool GUI_App::OnInit()
 {
 #ifdef __APPLE__
     RegisterMacPowerCallBack();
+#endif
+#if defined(__linux__) && !defined(__APPLE__)
+    RegisterLinuxPowerCallBack();
 #endif
 
     try {
@@ -2742,6 +2846,9 @@ int GUI_App::OnExit()
 {
 #ifdef __APPLE__
     UnRegisterMacPowerCallBack();
+#endif
+#if defined(__linux__) && !defined(__APPLE__)
+    UnRegisterLinuxPowerCallBack();
 #endif
 
     stop_sync_user_preset();
@@ -3348,6 +3455,11 @@ bool GUI_App::on_init_inner()
 #endif
     mainframe->Show(true);
     BOOST_LOG_TRIVIAL(info) << "main frame firstly shown";
+
+    // Auto-reconnect last-used printer on app open so the user doesn't have to manually
+    // click Device tab + printer name. Delay gives the DeviceManager's SSDP discovery
+    // (started during init) time to populate localMachineList before we try to select.
+    ensure_printer_reconnected(3000);
 
 //#if BBL_HAS_FIRST_PAGE
     //BBS: set tp3DEditor firstly

@@ -1,9 +1,11 @@
 #ifndef slic3r_GUI_App_hpp_
 #define slic3r_GUI_App_hpp_
 
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <string>
+#include <thread>
 #include "ImGuiWrapper.hpp"
 #include "ConfigWizard.hpp"
 #include "libslic3r/Preset.hpp"
@@ -801,6 +803,23 @@ private:
     io_object_t            m_mac_io_obj;
     io_service_t           m_mac_io_service;
 #endif
+
+#if defined(__linux__) && !defined(__APPLE__)
+    // Linux equivalent of MacPowerCallBack: subscribe to org.freedesktop.login1.Manager.PrepareForSleep
+    // on the system D-Bus and re-arm the LAN/MQTT connection to the selected printer after wake.
+    void        RegisterLinuxPowerCallBack();
+    void        UnRegisterLinuxPowerCallBack();
+
+    std::thread                 m_linux_power_thread;
+    std::atomic<bool>           m_linux_power_thread_stop{false};
+    std::string                 m_linux_power_last_selected_machine;
+#endif
+public:
+    // Schedule a delayed printer-reconnect attempt. If the currently-selected machine is
+    // already connected, no-op. Otherwise: looks up last selected dev_id, calls
+    // set_selected_machine(dev_id) after `delay_ms` (gives SSDP rediscovery + network
+    // recovery time after wake-from-sleep or window-activation events).
+    void        ensure_printer_reconnected(int delay_ms = 3000);
 };
 
 DECLARE_APP(GUI_App)
