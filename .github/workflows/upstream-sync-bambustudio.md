@@ -44,7 +44,7 @@ safe-outputs:
 
 # Sync upstream BambuStudio into a persistent PR
 
-Goal: keep this fork aligned with upstream `bambulab/BambuStudio` by maintaining one open PR from branch `upstream-sync/bambustudio` to `${{ github.event.repository.default_branch }}`.
+Goal: keep this fork aligned with upstream `bambulab/BambuStudio` by maintaining one open PR from branch `upstream-sync/bambustudio` to the repository default branch.
 
 ## Required behavior
 
@@ -53,7 +53,7 @@ Goal: keep this fork aligned with upstream `bambulab/BambuStudio` by maintaining
    - Ensure an `upstream` remote exists for `https://github.com/bambulab/BambuStudio.git`.
    - Fetch `origin` and `upstream`.
 2. Detect upstream default branch dynamically from remote HEAD.
-3. Create/reset local branch `upstream-sync/bambustudio` from `origin/${{ github.event.repository.default_branch }}`.
+3. Create/reset local branch `upstream-sync/bambustudio` from `origin/<default-branch>`.
 4. Merge upstream changes **as a single commit**:
    - Run a squash merge from `upstream/<detected-default-branch>`.
    - If conflicts occur, resolve them automatically in favor of upstream content (`theirs`) for conflicted files, then continue.
