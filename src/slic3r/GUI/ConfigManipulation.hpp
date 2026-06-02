@@ -24,7 +24,6 @@ class ConfigManipulation
 {
     bool                is_msg_dlg_already_exist{ false };
     bool                is_BBL_Printer{false};
-    bool                m_alt_suboptimal_acknowledged{ false };
 
     // function to loading of changed configuration
     std::function<void()>                                       load_config = nullptr;
