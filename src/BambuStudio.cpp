@@ -23,6 +23,7 @@
 #include <iomanip>
 #include <iostream>
 #include <math.h>
+#include <csignal>
 #include <regex>
 #include "nlohmann/json.hpp"
 
@@ -8770,6 +8771,13 @@ extern "C" {
 int main(int argc, char **argv)
 {
     std::set_new_handler(bbl_out_of_memory_handler);
+#ifndef _WIN32
+    // Orca: ignore SIGPIPE so a write to a closed socket (e.g. a dropped printer
+    // network connection) returns EPIPE to the caller instead of terminating the
+    // whole process. Without this, losing the printer link kills the app with
+    // SIGPIPE (exit 141) and produces no crash report.
+    std::signal(SIGPIPE, SIG_IGN);
+#endif
     return CLI().run(argc, argv);
 }
 #endif /* _MSC_VER */
