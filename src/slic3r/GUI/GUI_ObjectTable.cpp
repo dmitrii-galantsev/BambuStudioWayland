@@ -565,13 +565,22 @@ wxString GridCellSupportEditor::ms_stringValues[2] = { wxT(""), wxT("") };
 
 void GridCellSupportEditor::DoActivate(int row, int col, wxGrid* grid)
 {
-    ObjectGrid* local_table = dynamic_cast<ObjectGrid*>(grid);
     wxGridBlocks cell_array = grid->GetSelectedBlocks();
+    auto iter = cell_array.begin();
 
-    auto left_col = cell_array.begin()->GetLeftCol();
-    auto right_col = cell_array.begin()->GetRightCol();
-    auto top_row = cell_array.begin()->GetTopRow();
-    auto bottom_row = cell_array.begin()->GetBottomRow();
+    int left_col, right_col, top_row, bottom_row;
+    if (iter == cell_array.end()) {
+        // Orca (wx3.3.2): GetSelectedBlocks() returns an empty range when
+        // nothing is selected (wx3.1.5 always had >=1 block); fall back to the
+        // cell that triggered activation so the single-cell branch handles it.
+        left_col = right_col = col;
+        top_row  = bottom_row = row;
+    } else {
+        left_col   = iter->GetLeftCol();
+        right_col  = iter->GetRightCol();
+        top_row    = iter->GetTopRow();
+        bottom_row = iter->GetBottomRow();
+    }
 
 	if ((left_col == right_col) &&
 		(top_row == bottom_row)) {

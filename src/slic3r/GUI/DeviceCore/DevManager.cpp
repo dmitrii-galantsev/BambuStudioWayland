@@ -103,11 +103,17 @@ namespace Slic3r
     {
         keep_alive();
         MachineObject* obj = this->get_selected_machine();
+        // Orca: guard against null/stale selected machine during timer refresh
+        // (obj->last_update_time was dereferenced before the null check below).
+        if (!obj) {
+            BOOST_LOG_TRIVIAL(warning) << "DeviceManager::check_pushing selected machine not found";
+            return;
+        }
 
         std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
         auto internal = std::chrono::duration_cast<std::chrono::milliseconds>(start - obj->last_update_time);
 
-        if (obj && !obj->is_support_mqtt_alive)
+        if (!obj->is_support_mqtt_alive)
         {
             if (internal.count() > TIMEOUT_FOR_STRAT && internal.count() < 1000 * 60 * 60 * 300)
             {

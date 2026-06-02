@@ -895,7 +895,10 @@ void GLTexture::render_sub_texture(unsigned int tex_id, float left, float right,
     uv_matrix.data()[3 * 1 + 1] = scale_v;
 
     glsafe(::glEnable(GL_BLEND));
-    glsafe(::glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    // Orca: fix washed-out toolbar icons on Wayland: keep destination alpha at 1.0 so the
+    // compositor does not treat anti-aliased icon edges as window transparency. RGB blending
+    // is unchanged, so X11/Windows/macOS are unaffected.
+    glsafe(::glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
 
     const auto& p_ogl_manager = wxGetApp().get_opengl_manager();
     const auto& gl_info = p_ogl_manager->get_gl_info();

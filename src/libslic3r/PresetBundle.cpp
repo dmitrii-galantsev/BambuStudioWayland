@@ -3154,7 +3154,19 @@ int PresetBundle::get_printer_extruder_count() const
 {
     const Preset& printer_preset = this->printers.get_edited_preset();
 
-    int count = printer_preset.config.option<ConfigOptionFloatsNullable>("nozzle_diameter")->values.size();
+    // Orca: tolerate a missing/empty nozzle_diameter during startup preset sync
+    // instead of dereferencing a null option (crash on stale/partial configs).
+    const auto* nozzle_diameter = printer_preset.config.option<ConfigOptionFloatsNullable>("nozzle_diameter");
+    if (nozzle_diameter == nullptr) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": nozzle_diameter is missing, using 1 extruder";
+        return 1;
+    }
+    if (nozzle_diameter->values.empty()) {
+        BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << ": nozzle_diameter is empty, using 1 extruder";
+        return 1;
+    }
+
+    int count = int(nozzle_diameter->values.size());
 
     return count;
 }
