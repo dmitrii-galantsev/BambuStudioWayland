@@ -302,8 +302,12 @@ wxWebView* WebView::CreateWebView(wxWindow * parent, wxString const & url)
 #ifdef __WIN32__
     enable_default_webview2_cdp_for_internal_builds();
 
+    // Vanilla wxWidgets 3.3 has no wxWebView::SetUserDataPathOption (that is a
+    // Bambu wx fork extension). Point the Edge/WebView2 backend at our custom
+    // user-data folder via the documented environment variable instead, which
+    // must be set before the WebView2 environment is created.
+    wxSetEnv("WEBVIEW2_USER_DATA_FOLDER", BuildEdgeUserDataPath());
     wxWebView* webView = new WebViewEdge;
-    webView->SetUserDataPathOption(BuildEdgeUserDataPath());
 #elif defined(__WXOSX__)
     wxWebView *webView = new WebViewWebKit;
 #else

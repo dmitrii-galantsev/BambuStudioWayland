@@ -1,10 +1,16 @@
 #ifdef WIN32
-    // Why?
-    #define _WIN32_WINNT 0x0502
+    // Target Windows 10/11 (0x0A00). The old 0x0502 (Server 2003) breaks
+    // HDITEM and other structs when building against a modern Windows 11 SDK.
+    #define _WIN32_WINNT 0x0A00
     // The standard Windows includes.
     #define WIN32_LEAN_AND_MEAN
     #define NOMINMAX
     #include <Windows.h>
+    // Pull in the common-controls header section (HDITEM etc.) early, while the
+    // macro state is clean. A later dependency header otherwise defines NOHEADER
+    // and includes <commctrl.h> first, which makes wxWidgets' wrapcctl.h fail
+    // with "HDITEM: base class undefined" against a modern Windows SDK.
+    #include <commctrl.h>
     #include <wchar.h>
     #ifdef SLIC3R_GUI
     extern "C"

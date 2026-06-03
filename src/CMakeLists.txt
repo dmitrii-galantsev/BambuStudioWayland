@@ -35,6 +35,10 @@ if (SLIC3R_GUI)
 
     if(WIN32)
         message(STATUS "WXWIN environment set to: $ENV{WXWIN}")
+        # The wx 3.3 deps install ships both mswu and mswud config dirs but only
+        # release libs. Without this, FindwxWidgets switches to release+debug mode
+        # and fails looking for the (absent) wxmsw33ud_* debug libraries.
+        set(wxWidgets_USE_REL_AND_DBG FALSE CACHE BOOL "Use release-only wxWidgets" FORCE)
     elseif(UNIX)
         set(wxWidgets_USE_UNICODE ON)
         if(SLIC3R_STATIC)
@@ -96,6 +100,19 @@ if (SLIC3R_GUI)
     list(FILTER wxWidgets_LIBRARIES EXCLUDE REGEX OpenGL)
 
 #    list(REMOVE_ITEM wxWidgets_LIBRARIES oleacc)
+
+    # wxWidgets 3.3 enables WebP image handling (imagwebp.obj in wxmsw33u_core),
+    # but CMake's FindwxWidgets does not link wx's bundled libwebp. Add the
+    # bundled libs explicitly on MSVC to resolve the WebP* symbols.
+    if (MSVC)
+        foreach(_wxextra wxwebp wxwebpdemux wxsharpyuv)
+            find_library(WX_EXTRA_${_wxextra} NAMES ${_wxextra} PATHS ${wxWidgets_LIB_DIR} NO_DEFAULT_PATH)
+            if (WX_EXTRA_${_wxextra})
+                list(APPEND wxWidgets_LIBRARIES ${WX_EXTRA_${_wxextra}})
+            endif ()
+        endforeach()
+    endif ()
+
     message(STATUS "wx libs: ${wxWidgets_LIBRARIES}")
 
     add_subdirectory(slic3r)

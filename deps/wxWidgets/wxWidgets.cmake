@@ -60,7 +60,10 @@ bambustudio_add_cmake_project(wxWidgets
 # Some private headers are used (for accessibility support).
 # Copy the private headers directory after install.
 if(MSVC)
-    set(_wx_inc_dest ${DESTDIR}/include/wx)
+    # On Windows the deps install under ${DESTDIR}/usr/local, so the private
+    # headers must go there too (not ${DESTDIR}/include) or the app build fails
+    # with C1083 on wx/private/*.h and wx/generic/private/*.h.
+    set(_wx_inc_dest ${DESTDIR}/usr/local/include/wx)
 else()
     set(_wx_inc_dest ${DESTDIR}/include/wx-3.3/wx)
 endif()
