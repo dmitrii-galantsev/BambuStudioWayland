@@ -144,6 +144,9 @@
 #include "SingleChoiceDialog.hpp"
 #include "TextureImportDialog.hpp"
 #include "ProjectDirtyStateManager.hpp"
+#include "FileArchiveDialog.hpp"
+#include "libslic3r/miniz_extension.hpp"
+#include <wx/stdpaths.h>
 #include "Gizmos/GLGizmoSimplify.hpp" // create suggestion notification
 #include "Gizmos/GLGizmoSVG.hpp" // Drop SVG file
 // BBS
@@ -21610,6 +21613,25 @@ bool Plater::load_files(const wxArrayString& filenames)
     const std::regex pattern_drop(".*[.](stp|step|stl|oltp|obj|amf|3mf|svg|gltf|glb|fbx)", std::regex::icase);
     const std::regex pattern_gcode_drop(".*[.](gcode|g)", std::regex::icase);
 
+    // BBS: handle .zip archives separately - extract and let the user pick which models to import.
+    {
+        wxArrayString remaining;
+        bool handled_zip = false;
+        for (const auto& filename : filenames) {
+            if (boost::algorithm::iends_with(filename.ToStdString(), ".zip")) {
+                handled_zip = true;
+                preview_zip_archive(into_path(filename));
+            } else {
+                remaining.Add(filename);
+            }
+        }
+        if (handled_zip) {
+            if (remaining.IsEmpty())
+                return true;
+            return load_files(remaining);
+        }
+    }
+
     std::vector<fs::path> normal_paths;
     std::vector<fs::path> gcode_paths;
     if (!load_same_type_files(filenames)) {
@@ -21883,6 +21905,186 @@ int Plater::get_3mf_file_count(std::vector<fs::path> paths)
         }
     }
     return count;
+}
+
+void Plater::import_zip_archive()
+{
+    wxString input_file;
+    wxGetApp().import_zip(this, input_file);
+    if (input_file.empty())
+        return;
+
+    wxArrayString arr;
+    arr.Add(input_file);
+    load_files(arr);
+}
+
+bool Plater::preview_zip_archive(const boost::filesystem::path& archive_path)
+{
+    std::vector<fs::path> non_project_paths;
+    std::vector<fs::path> project_paths;
+    try
+    {
+        mz_zip_archive archive;
+        mz_zip_zero_struct(&archive);
+
+        if (!open_zip_reader(&archive, archive_path.string())) {
+            // TRN %1% is archive path
+            std::string err_msg = GUI::format(_u8L("Loading of a ZIP archive on path %1% has failed."), archive_path.string());
+            throw Slic3r::FileIOError(err_msg);
+        }
+        mz_uint num_entries = mz_zip_reader_get_num_files(&archive);
+        mz_zip_archive_file_stat stat;
+        // selected_paths contains paths and its uncompressed size. The size is used to distinguish between files with same path.
+        std::vector<std::pair<fs::path, size_t>> selected_paths;
+        FileArchiveDialog dlg(static_cast<wxWindow*>(wxGetApp().mainframe), &archive, selected_paths);
+        if (dlg.ShowModal() == wxID_OK)
+        {
+            fs::path archive_dir(wxStandardPaths::Get().GetTempDir().utf8_str().data());
+
+            for (auto& path_w_size : selected_paths) {
+                const fs::path& path = path_w_size.first;
+                size_t size = path_w_size.second;
+                // find path in zip archive
+                for (mz_uint i = 0; i < num_entries; ++i) {
+                    if (mz_zip_reader_file_stat(&archive, i, &stat)) {
+                        if (size != stat.m_uncomp_size) // size must fit
+                            continue;
+                        wxString wname = boost::nowide::widen(stat.m_filename);
+                        std::string name = into_u8(wname);
+                        fs::path archive_path(name);
+
+                        if (archive_path.empty())
+                            continue;
+                        if (path != archive_path)
+                            continue;
+                        // decompressing
+                        try
+                        {
+                            std::replace(name.begin(), name.end(), '\\', '/');
+                            // rename if file exists
+                            std::string filename = path.filename().string();
+                            std::string extension = path.extension().string();
+                            std::string just_filename = filename.substr(0, filename.size() - extension.size());
+                            std::string final_filename = just_filename;
+
+                            size_t version = 0;
+                            while (fs::exists(archive_dir / (final_filename + extension)))
+                            {
+                                ++version;
+                                final_filename = just_filename + "(" + std::to_string(version) + ")";
+                            }
+                            filename = final_filename + extension;
+                            fs::path final_path = archive_dir / filename;
+                            std::string buffer((size_t)stat.m_uncomp_size, 0);
+                            // Decompress action. We already has correct file index in stat structure.
+                            mz_bool res = mz_zip_reader_extract_to_mem(&archive, stat.m_file_index, (void*)buffer.data(), (size_t)stat.m_uncomp_size, 0);
+                            if (res == 0) {
+                                // TRN: First argument = path to file, second argument = error description
+                                wxString error_log = GUI::format_wxstr(_L("Failed to unzip file to %1%: %2%"), final_path.string(), mz_zip_get_error_string(mz_zip_get_last_error(&archive)));
+                                BOOST_LOG_TRIVIAL(error) << error_log;
+                                show_error(nullptr, error_log);
+                                break;
+                            }
+                            // write buffer to file
+                            fs::fstream file(final_path, std::ios::out | std::ios::binary | std::ios::trunc);
+                            file.write(buffer.c_str(), buffer.size());
+                            file.close();
+                            if (!fs::exists(final_path)) {
+                                wxString error_log = GUI::format_wxstr(_L("Failed to find unzipped file at %1%. Unzipping of file has failed."), final_path.string());
+                                BOOST_LOG_TRIVIAL(error) << error_log;
+                                show_error(nullptr, error_log);
+                                break;
+                            }
+                            BOOST_LOG_TRIVIAL(info) << "Unzipped " << final_path;
+                            if (!boost::algorithm::iends_with(filename, ".3mf") && !boost::algorithm::iends_with(filename, ".amf")) {
+                                non_project_paths.emplace_back(final_path);
+                                break;
+                            }
+                            // if amf - read archive headers to find project file
+                            if (boost::algorithm::iends_with(filename, ".amf") && !boost::algorithm::iends_with(filename, ".zip.amf")) {
+                                non_project_paths.emplace_back(final_path);
+                                break;
+                            }
+
+                            project_paths.emplace_back(final_path);
+                            break;
+                        }
+                        catch (const std::exception& e)
+                        {
+                            // ensure the zip archive is closed and rethrow the exception
+                            close_zip_reader(&archive);
+                            throw Slic3r::FileIOError(e.what());
+                        }
+                    }
+                }
+            }
+            close_zip_reader(&archive);
+            if (non_project_paths.size() + project_paths.size() != selected_paths.size())
+                BOOST_LOG_TRIVIAL(error) << "Decompresing of archive did not retrieve all files. Expected files: "
+                                         << selected_paths.size()
+                                         << " Decopressed files: "
+                                         << non_project_paths.size() + project_paths.size();
+        } else {
+            close_zip_reader(&archive);
+            return false;
+        }
+
+    }
+    catch (const Slic3r::FileIOError& e) {
+        // zip reader should be already closed or not even opened
+        GUI::show_error(this, e.what());
+        return false;
+    }
+    // none selected
+    if (project_paths.empty() && non_project_paths.empty())
+    {
+        return false;
+    }
+
+    // 1 project file and some models - behave like drag n drop of 3mf and then load models
+    if (project_paths.size() == 1)
+    {
+        wxArrayString aux;
+        aux.Add(from_u8(project_paths.front().string()));
+        bool loaded3mf = load_files(aux);
+        load_files(non_project_paths, LoadStrategy::LoadModel);
+        boost::system::error_code ec;
+        if (loaded3mf) {
+            fs::remove(project_paths.front(), ec);
+            if (ec)
+                BOOST_LOG_TRIVIAL(error) << ec.message();
+        }
+        for (const fs::path& path : non_project_paths) {
+            // Delete file from temp file (path variable), it will stay only in app memory.
+            boost::system::error_code ec;
+            fs::remove(path, ec);
+            if (ec)
+                BOOST_LOG_TRIVIAL(error) << ec.message();
+        }
+        return true;
+    }
+
+    // load all projects and all models as geometry
+    load_files(project_paths, LoadStrategy::LoadModel);
+    load_files(non_project_paths, LoadStrategy::LoadModel);
+
+    for (const fs::path& path : project_paths) {
+        // Delete file from temp file (path variable), it will stay only in app memory.
+        boost::system::error_code ec;
+        fs::remove(path, ec);
+        if (ec)
+            BOOST_LOG_TRIVIAL(error) << ec.message();
+    }
+    for (const fs::path& path : non_project_paths) {
+        // Delete file from temp file (path variable), it will stay only in app memory.
+        boost::system::error_code ec;
+        fs::remove(path, ec);
+        if (ec)
+            BOOST_LOG_TRIVIAL(error) << ec.message();
+    }
+
+    return true;
 }
 
 void Plater::add_file()

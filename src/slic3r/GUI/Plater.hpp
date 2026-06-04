@@ -375,6 +375,8 @@ public:
     int  get_3mf_file_count(std::vector<fs::path> paths);
     void add_file();
     void add_model(bool imperial_units = false, std::string fname = "");
+    void import_zip_archive();
+    bool preview_zip_archive(const boost::filesystem::path& archive_path);
     void import_sl1_archive();
     void extract_config_from_project();
     void load_gcode();
