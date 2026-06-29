@@ -1,6 +1,6 @@
 #include "PBOReader.hpp"
 #include "slic3r/GUI/3DScene.hpp"  // glsafe
-#include <GL/glew.h>
+#include <glad/gl.h>
 
 namespace Slic3r {
 namespace GUI {

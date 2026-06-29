@@ -84,6 +84,7 @@ private:
     void * m_player = nullptr;
     wxMediaState m_state = wxMEDIASTATE_STOPPED;
     int          m_error  = 0;
+    bool         m_constrain_by_aspect_ratio = false;
     wxSize       m_video_size{16, 9};
 
     wxString m_idle_image;

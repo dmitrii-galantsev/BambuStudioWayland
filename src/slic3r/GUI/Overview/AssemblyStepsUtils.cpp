@@ -39,7 +39,6 @@
 
 #include <hpdf/hpdf.h>
 
-#include <GL/glew.h>
 #include <wx/glcanvas.h>
 #include <imgui/imgui_internal.h>
 

@@ -149,6 +149,7 @@ private:
     } m_pending_stream;
 
     FirstFrameInfo    m_first_frame_info;
+    bool               m_constrain_by_aspect_ratio = false;
 
 public:
     BambuLiveViewTrack::ChannelInfo m_track_channel;

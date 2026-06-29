@@ -54,8 +54,6 @@
 #ifdef __APPLE__
 #include "libslic3r/MacUtils.hpp"
 #endif
-#include <GL/glew.h>
-
 #include <wx/glcanvas.h>
 #include <wx/bitmap.h>
 #include <wx/dcmemory.h>
